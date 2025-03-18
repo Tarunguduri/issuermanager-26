@@ -61,6 +61,11 @@ const IssueDetails = () => {
     }
   };
 
+  // Update document title without favicon
+  useEffect(() => {
+    document.title = issue ? `${issue.title} | JAGRUTHI` : 'Issue Details | JAGRUTHI';
+  }, [issue]);
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />

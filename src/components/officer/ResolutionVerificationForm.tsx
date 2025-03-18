@@ -9,10 +9,11 @@ import {
   updateAIResolutionStatus, 
   updateIssue 
 } from '@/utils/issues-service';
-import { Loader2, Upload, X, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, Upload, X, CheckCircle2, AlertCircle, ImageCompare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import GlassmorphicCard from '../ui/GlassmorphicCard';
 import { Issue } from '@/utils/issues-service';
+import { Input } from '../ui/input';
 
 interface ResolutionVerificationFormProps {
   issue: Issue;
@@ -323,7 +324,10 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
                   Verifying Resolution...
                 </>
               ) : (
-                'Verify Resolution with AI'
+                <>
+                  <ImageCompare className="mr-2 h-4 w-4" />
+                  Verify Resolution with AI
+                </>
               )}
             </Button>
             
