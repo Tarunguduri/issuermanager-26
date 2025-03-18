@@ -46,9 +46,9 @@ const Header: React.FC = () => {
       <div className="container mx-auto px-4 md:px-6 flex items-center justify-between">
         <Link 
           to="/" 
-          className="text-xl font-medium flex items-center gap-2 transition-transform hover:scale-[1.02] active:scale-[0.98]"
+          className="text-xl font-bold flex items-center gap-2 transition-transform hover:scale-[1.02] active:scale-[0.98] text-gradient-blue-green"
         >
-          Issue Manager
+          JAGRUTHI
         </Link>
 
         {/* Desktop Navigation */}
@@ -63,7 +63,7 @@ const Header: React.FC = () => {
               </Link>
               
               <div className="text-sm text-muted-foreground">
-                {user.role === 'issuer' ? 'Issuer' : 'Officer'}: {user.name}
+                {user?.role === 'issuer' ? 'Citizen' : 'Officer'}: {user?.name}
               </div>
             </>
           )}
@@ -116,7 +116,7 @@ const Header: React.FC = () => {
               {isAuthenticated ? (
                 <>
                   <div className="text-sm font-medium py-2 px-3 bg-secondary rounded-md">
-                    {user?.role === 'issuer' ? 'Issuer' : 'Officer'}: {user?.name}
+                    {user?.role === 'issuer' ? 'Citizen' : 'Officer'}: {user?.name}
                   </div>
                   
                   <Link

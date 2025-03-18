@@ -5,12 +5,14 @@ import { cn } from '@/lib/utils';
 interface GlassmorphicCardProps extends React.HTMLAttributes<HTMLDivElement> {
   intensity?: 'light' | 'medium' | 'strong';
   children: React.ReactNode;
+  withHover?: boolean;
 }
 
 const GlassmorphicCard: React.FC<GlassmorphicCardProps> = ({ 
   intensity = 'medium', 
   className, 
-  children, 
+  children,
+  withHover = false,
   ...props 
 }) => {
   const intensityClasses = {
@@ -24,6 +26,7 @@ const GlassmorphicCard: React.FC<GlassmorphicCardProps> = ({
       className={cn(
         'rounded-lg border shadow-sm transition-all duration-300',
         intensityClasses[intensity],
+        withHover && 'hover:shadow-md hover:scale-[1.02] hover:border-primary/20',
         className
       )}
       {...props}

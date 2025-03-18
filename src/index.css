@@ -34,6 +34,12 @@
     --ring: 240 5.9% 10%;
     
     --radius: 0.75rem;
+    
+    /* JAGRUTHI Theme Colors */
+    --jagruthi-blue: 210 100% 50%;
+    --jagruthi-blue-dark: 210 100% 40%; 
+    --jagruthi-green: 142 70% 45%;
+    --jagruthi-green-dark: 142 70% 35%;
   }
 
   .dark {
@@ -64,6 +70,12 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
+    
+    /* JAGRUTHI Theme Colors - Dark Mode Variants */
+    --jagruthi-blue: 210 100% 60%;
+    --jagruthi-blue-dark: 210 100% 50%;
+    --jagruthi-green: 142 70% 55%;
+    --jagruthi-green-dark: 142 70% 45%;
   }
 }
 
@@ -95,6 +107,34 @@
   
   .button-shine {
     @apply relative overflow-hidden bg-gradient-to-r from-primary/80 via-primary to-primary/80 bg-[length:200%_100%] animate-background-shine;
+  }
+  
+  .text-gradient-blue-green {
+    @apply bg-gradient-to-r from-[hsl(var(--jagruthi-blue))] to-[hsl(var(--jagruthi-green))] bg-clip-text text-transparent;
+  }
+  
+  .bg-jagruthi-blue {
+    @apply bg-[hsl(var(--jagruthi-blue))];
+  }
+  
+  .bg-jagruthi-blue-dark {
+    @apply bg-[hsl(var(--jagruthi-blue-dark))];
+  }
+  
+  .bg-jagruthi-green {
+    @apply bg-[hsl(var(--jagruthi-green))];
+  }
+  
+  .bg-jagruthi-green-dark {
+    @apply bg-[hsl(var(--jagruthi-green-dark))];
+  }
+  
+  .text-jagruthi-blue {
+    @apply text-[hsl(var(--jagruthi-blue))];
+  }
+  
+  .text-jagruthi-green {
+    @apply text-[hsl(var(--jagruthi-green))];
   }
   
   .animate-in {

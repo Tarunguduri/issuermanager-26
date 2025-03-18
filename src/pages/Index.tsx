@@ -1,13 +1,12 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
 import Header from '@/components/layout/Header';
 import RoleSelection from '@/components/auth/RoleSelection';
 import GlassmorphicCard from '@/components/ui/GlassmorphicCard';
-import { ClipboardList, BarChart4, Shield, User, CheckCircle } from 'lucide-react';
+import { ClipboardList, BarChart4, Shield, User, CheckCircle, Lightbulb } from 'lucide-react';
 
 const Index = () => {
   const { user, isAuthenticated, setUserRole } = useAuth();
@@ -35,7 +34,7 @@ const Index = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       
-      <main className="flex-1 pt-24 pb-12">
+      <main className="flex-1 pt-24 pb-12 bg-gradient-to-b from-background to-background/50">
         <div className="container mx-auto px-4 md:px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -48,10 +47,13 @@ const Index = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2, duration: 0.5 }}
             >
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-                Issue Management System
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-gradient-blue-green">
+                JAGRUTHI
               </h1>
-              <p className="text-xl text-muted-foreground mb-8">
+              <p className="text-xl md:text-2xl font-medium mb-2 text-primary/90">
+                Smart Citizen Issue Management System
+              </p>
+              <p className="text-lg text-muted-foreground mb-8">
                 A unified platform for reporting and resolving community issues efficiently
               </p>
             </motion.div>
@@ -69,10 +71,10 @@ const Index = () => {
           >
             <h2 className="text-2xl font-semibold text-center mb-8">Key Features</h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-              <GlassmorphicCard className="p-6 flex flex-col items-center text-center">
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <ClipboardList className="h-6 w-6 text-primary" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+              <GlassmorphicCard className="p-6 flex flex-col items-center text-center" withHover>
+                <div className="h-12 w-12 rounded-full bg-blue-600/10 flex items-center justify-center mb-4">
+                  <ClipboardList className="h-6 w-6 text-blue-500" />
                 </div>
                 <h3 className="font-medium text-lg mb-2">Issue Tracking</h3>
                 <p className="text-muted-foreground">
@@ -80,19 +82,29 @@ const Index = () => {
                 </p>
               </GlassmorphicCard>
               
-              <GlassmorphicCard className="p-6 flex flex-col items-center text-center">
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <User className="h-6 w-6 text-primary" />
+              <GlassmorphicCard className="p-6 flex flex-col items-center text-center" withHover>
+                <div className="h-12 w-12 rounded-full bg-green-600/10 flex items-center justify-center mb-4">
+                  <Lightbulb className="h-6 w-6 text-green-500" />
                 </div>
-                <h3 className="font-medium text-lg mb-2">Role-Based Access</h3>
+                <h3 className="font-medium text-lg mb-2">AI-Powered Verification</h3>
                 <p className="text-muted-foreground">
-                  Separate portals for issue reporters and officers
+                  Smart image analysis ensures accurate issue reporting and resolution
                 </p>
               </GlassmorphicCard>
               
-              <GlassmorphicCard className="p-6 flex flex-col items-center text-center">
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <BarChart4 className="h-6 w-6 text-primary" />
+              <GlassmorphicCard className="p-6 flex flex-col items-center text-center" withHover>
+                <div className="h-12 w-12 rounded-full bg-blue-600/10 flex items-center justify-center mb-4">
+                  <User className="h-6 w-6 text-blue-500" />
+                </div>
+                <h3 className="font-medium text-lg mb-2">Role-Based Access</h3>
+                <p className="text-muted-foreground">
+                  Separate portals for citizens and municipal officers
+                </p>
+              </GlassmorphicCard>
+              
+              <GlassmorphicCard className="p-6 flex flex-col items-center text-center" withHover>
+                <div className="h-12 w-12 rounded-full bg-green-600/10 flex items-center justify-center mb-4">
+                  <BarChart4 className="h-6 w-6 text-green-500" />
                 </div>
                 <h3 className="font-medium text-lg mb-2">Status Updates</h3>
                 <p className="text-muted-foreground">
@@ -100,13 +112,23 @@ const Index = () => {
                 </p>
               </GlassmorphicCard>
               
-              <GlassmorphicCard className="p-6 flex flex-col items-center text-center">
-                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                  <CheckCircle className="h-6 w-6 text-primary" />
+              <GlassmorphicCard className="p-6 flex flex-col items-center text-center" withHover>
+                <div className="h-12 w-12 rounded-full bg-blue-600/10 flex items-center justify-center mb-4">
+                  <Shield className="h-6 w-6 text-blue-500" />
                 </div>
-                <h3 className="font-medium text-lg mb-2">Efficient Resolution</h3>
+                <h3 className="font-medium text-lg mb-2">Specialized Assignment</h3>
                 <p className="text-muted-foreground">
-                  Streamlined workflow for faster issue resolution
+                  Issues are assigned based on category and location matching
+                </p>
+              </GlassmorphicCard>
+              
+              <GlassmorphicCard className="p-6 flex flex-col items-center text-center" withHover>
+                <div className="h-12 w-12 rounded-full bg-green-600/10 flex items-center justify-center mb-4">
+                  <CheckCircle className="h-6 w-6 text-green-500" />
+                </div>
+                <h3 className="font-medium text-lg mb-2">Verified Resolution</h3>
+                <p className="text-muted-foreground">
+                  AI confirms issue resolution through before/after image comparison
                 </p>
               </GlassmorphicCard>
             </div>
@@ -116,7 +138,7 @@ const Index = () => {
       
       <footer className="border-t border-border py-6">
         <div className="container mx-auto px-4 md:px-6 text-center text-muted-foreground">
-          <p>© {new Date().getFullYear()} Issue Management System. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} JAGRUTHI - Smart Citizen Issue Management System. All rights reserved.</p>
         </div>
       </footer>
     </div>

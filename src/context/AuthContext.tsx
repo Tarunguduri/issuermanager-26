@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { categories, zones, designations } from '@/utils/issues-service';
 
 type UserRole = 'issuer' | 'officer' | null;
 
@@ -8,6 +9,9 @@ interface User {
   name: string;
   email: string;
   role: UserRole;
+  category?: string; // For officers
+  designation?: string; // For officers
+  zone?: string; // For officers
 }
 
 interface AuthContextType {
@@ -15,7 +19,15 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string, role: UserRole) => Promise<void>;
-  register: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
+  register: (
+    name: string, 
+    email: string, 
+    password: string, 
+    role: UserRole, 
+    category?: string, 
+    designation?: string, 
+    zone?: string
+  ) => Promise<void>;
   logout: () => void;
   setUserRole: (role: UserRole) => void;
 }
@@ -23,7 +35,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Mock data store for demo purposes
-const USERS_STORAGE_KEY = 'issue_manager_users';
+const USERS_STORAGE_KEY = 'jagruthi_users';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -80,7 +92,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (name: string, email: string, password: string, role: UserRole): Promise<void> => {
+  const register = async (
+    name: string, 
+    email: string, 
+    password: string, 
+    role: UserRole,
+    category?: string,
+    designation?: string,
+    zone?: string
+  ): Promise<void> => {
     setIsLoading(true);
     
     try {
@@ -101,7 +121,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: crypto.randomUUID(),
         name,
         email,
-        role
+        role,
+        ...(role === 'officer' && {
+          category,
+          designation,
+          zone
+        })
       };
       
       // Add user to storage
