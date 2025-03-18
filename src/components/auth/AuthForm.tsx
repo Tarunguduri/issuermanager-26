@@ -9,6 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import GlassmorphicCard from '@/components/ui/GlassmorphicCard';
 import { Loader2 } from 'lucide-react';
+import { categories, zones, designations } from '@/utils/issues-service';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 type AuthMode = 'login' | 'register';
 
@@ -28,11 +36,18 @@ const AuthForm: React.FC<AuthFormProps> = ({ initialMode = 'login', role }) => {
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    category: '',
+    designation: '',
+    zone: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -53,8 +68,29 @@ const AuthForm: React.FC<AuthFormProps> = ({ initialMode = 'login', role }) => {
           return;
         }
 
+        // Additional validation for officer registration
+        if (role === 'officer') {
+          if (!formData.category || !formData.designation || !formData.zone) {
+            toast({ 
+              title: "Error", 
+              description: "Category, designation, and zone are required for officer registration", 
+              variant: "destructive" 
+            });
+            setIsLoading(false);
+            return;
+          }
+        }
+
         // Registration
-        await register(formData.name, formData.email, formData.password, role);
+        await register(
+          formData.name, 
+          formData.email, 
+          formData.password, 
+          role,
+          role === 'officer' ? formData.category : undefined,
+          role === 'officer' ? formData.designation : undefined,
+          role === 'officer' ? formData.zone : undefined
+        );
         toast({ title: "Success", description: "Account created successfully" });
         
         // Redirect based on role
@@ -142,19 +178,85 @@ const AuthForm: React.FC<AuthFormProps> = ({ initialMode = 'login', role }) => {
           </div>
           
           {mode === 'register' && (
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="••••••••"
-                className="glass-input"
-                required
-              />
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  className="glass-input"
+                  required
+                />
+              </div>
+
+              {/* Additional fields for officer registration */}
+              {role === 'officer' && (
+                <div className="space-y-4 mt-6 p-4 border border-primary/20 rounded-md bg-primary/5">
+                  <h3 className="text-sm font-medium">Officer Details</h3>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category</Label>
+                    <Select 
+                      value={formData.category} 
+                      onValueChange={(value) => handleSelectChange('category', value)}
+                    >
+                      <SelectTrigger className="glass-input">
+                        <SelectValue placeholder="Select your category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map(category => (
+                          <SelectItem key={category} value={category}>
+                            {category}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="designation">Designation</Label>
+                    <Select 
+                      value={formData.designation} 
+                      onValueChange={(value) => handleSelectChange('designation', value)}
+                    >
+                      <SelectTrigger className="glass-input">
+                        <SelectValue placeholder="Select your designation" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {designations.map(designation => (
+                          <SelectItem key={designation} value={designation}>
+                            {designation}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="zone">Zone</Label>
+                    <Select 
+                      value={formData.zone} 
+                      onValueChange={(value) => handleSelectChange('zone', value)}
+                    >
+                      <SelectTrigger className="glass-input">
+                        <SelectValue placeholder="Select your zone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {zones.map(zone => (
+                          <SelectItem key={zone} value={zone}>
+                            {zone}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </>
           )}
           
           <Button 

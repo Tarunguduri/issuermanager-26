@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import AuthForm from '@/components/auth/AuthForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import PageTransition from '@/components/layout/PageTransition';
 
 const Register = () => {
   const { isAuthenticated, user } = useAuth();
@@ -34,13 +35,8 @@ const Register = () => {
       <Header />
       
       <main className="flex-1 pt-24 pb-12">
-        <div className="container mx-auto px-4 md:px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="max-w-lg mx-auto"
-          >
+        <PageTransition className="container mx-auto px-4 md:px-6">
+          <div className="max-w-lg mx-auto">
             <div className="mb-8">
               <Button
                 variant="ghost"
@@ -53,13 +49,13 @@ const Register = () => {
               
               <h1 className="text-3xl font-bold mb-2">Create Account</h1>
               <p className="text-muted-foreground">
-                Sign up to report or manage issues
+                Sign up to {selectedRole === 'issuer' ? 'report issues' : 'manage and resolve issues'}
               </p>
             </div>
             
             <AuthForm initialMode="register" role={selectedRole} />
-          </motion.div>
-        </div>
+          </div>
+        </PageTransition>
       </main>
     </div>
   );

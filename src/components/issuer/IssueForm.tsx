@@ -13,8 +13,8 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { createIssue } from '@/utils/issues-service';
-import { Loader2, Upload, X } from 'lucide-react';
+import { createIssue, verifyImageWithAI } from '@/utils/issues-service';
+import { Loader2, Upload, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import GlassmorphicCard from '../ui/GlassmorphicCard';
 
@@ -23,11 +23,14 @@ interface IssueFormProps {
 }
 
 const categories = [
-  'Infrastructure',
+  'Water Supply',
+  'Electricity',
   'Roads',
+  'Garbage Collection',
+  'Sewage',
+  'Street Lights',
   'Public Property',
-  'Safety',
-  'Environmental',
+  'Parks',
   'Other'
 ];
 
@@ -41,6 +44,9 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verified' | 'rejected' | null>(null);
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -48,9 +54,12 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
     location: '',
     priority: 'medium' as 'low' | 'medium' | 'high'
   });
+  
   const [images, setImages] = useState<{
     file: File;
     preview: string;
+    verified?: boolean;
+    verificationMessage?: string;
   }[]>([]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -60,6 +69,10 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+    // Reset verification when category changes
+    if (name === 'category' && images.length > 0) {
+      setVerificationStatus(null);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,6 +83,8 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
       }));
       
       setImages(prev => [...prev, ...newFiles]);
+      // Reset verification status when new images are added
+      setVerificationStatus(null);
     }
   };
 
@@ -80,6 +95,87 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
       updated.splice(index, 1);
       return updated;
     });
+    // Reset verification status when images are removed
+    setVerificationStatus(null);
+  };
+
+  const verifyImages = async () => {
+    if (!formData.category) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a category before verifying images",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (images.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please upload at least one image to verify",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsVerifying(true);
+    setVerificationStatus('pending');
+
+    try {
+      // Verify each image with AI
+      const verificationPromises = images.map(async (image, index) => {
+        // In real app, we would upload the image to a server and get a URL
+        // For this demo, we'll use the mock implementation with the image preview URL
+        const result = await verifyImageWithAI(image.preview, formData.category);
+        
+        return {
+          index,
+          verified: result.success,
+          message: result.message
+        };
+      });
+
+      const results = await Promise.all(verificationPromises);
+      
+      // Update images with verification results
+      const updatedImages = [...images];
+      results.forEach(result => {
+        updatedImages[result.index] = {
+          ...updatedImages[result.index],
+          verified: result.verified,
+          verificationMessage: result.message
+        };
+      });
+      
+      setImages(updatedImages);
+      
+      // Overall verification status
+      const allVerified = results.every(result => result.verified);
+      setVerificationStatus(allVerified ? 'verified' : 'rejected');
+      
+      if (allVerified) {
+        toast({
+          title: "Verification Successful",
+          description: "All images have been verified for the selected category",
+        });
+      } else {
+        toast({
+          title: "Verification Failed",
+          description: "Some images could not be verified. Please check the details and try again.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Verification Error",
+        description: "Failed to verify images. Please try again.",
+        variant: "destructive"
+      });
+      setVerificationStatus(null);
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,6 +199,24 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
       return;
     }
     
+    if (images.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please upload at least one image of the issue",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (verificationStatus !== 'verified') {
+      toast({
+        title: "Verification Required",
+        description: "Please verify your images before submitting",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -119,7 +233,9 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
         status: 'pending',
         issuerId: user.id,
         issuerName: user.name,
-        images: imageNames
+        images: imageNames,
+        beforeImages: imageNames,
+        ai_verification_status: 'verified'
       });
       
       toast({
@@ -139,6 +255,7 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
       // Clean up image previews
       images.forEach(img => URL.revokeObjectURL(img.preview));
       setImages([]);
+      setVerificationStatus(null);
       
       // Call success callback if provided
       if (onSuccess) {
@@ -240,7 +357,37 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
         </div>
         
         <div className="space-y-4">
-          <Label>Images (Optional)</Label>
+          <div className="flex items-center justify-between">
+            <Label>Images (Required)</Label>
+            {verificationStatus && (
+              <div className={`flex items-center text-sm ${
+                verificationStatus === 'verified' 
+                  ? 'text-green-500' 
+                  : verificationStatus === 'rejected' 
+                    ? 'text-red-500' 
+                    : 'text-amber-500'
+              }`}>
+                {verificationStatus === 'verified' && (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 mr-1" />
+                    <span>Verified</span>
+                  </>
+                )}
+                {verificationStatus === 'rejected' && (
+                  <>
+                    <AlertCircle className="h-4 w-4 mr-1" />
+                    <span>Not Verified</span>
+                  </>
+                )}
+                {verificationStatus === 'pending' && (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    <span>Verifying...</span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
           
           {images.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-4">
@@ -249,13 +396,26 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
                   key={index}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="relative group aspect-square rounded-md overflow-hidden border border-border"
+                  className={`relative group aspect-square rounded-md overflow-hidden border ${
+                    image.verified === true 
+                      ? 'border-green-400' 
+                      : image.verified === false 
+                        ? 'border-red-400' 
+                        : 'border-border'
+                  }`}
                 >
                   <img
                     src={image.preview}
                     alt={`Preview ${index}`}
                     className="w-full h-full object-cover"
                   />
+                  {image.verified !== undefined && (
+                    <div className={`absolute top-0 left-0 right-0 p-1 text-xs text-white ${
+                      image.verified ? 'bg-green-500/80' : 'bg-red-500/80'
+                    }`}>
+                      {image.verified ? 'Verified' : 'Not Verified'}
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => removeImage(index)}
@@ -263,6 +423,11 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
                   >
                     <X className="h-4 w-4" />
                   </button>
+                  {image.verificationMessage && (
+                    <div className="absolute bottom-0 left-0 right-0 p-2 text-xs text-white bg-black/70">
+                      {image.verificationMessage}
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -292,22 +457,41 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
               />
             </label>
           </div>
+
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Button
+              type="button"
+              onClick={verifyImages}
+              disabled={isVerifying || !formData.category || images.length === 0}
+              className="w-full sm:w-1/2"
+              variant="outline"
+            >
+              {isVerifying ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                'Verify Images with AI'
+              )}
+            </Button>
+            
+            <Button
+              type="submit"
+              disabled={isLoading || verificationStatus !== 'verified'}
+              className="w-full sm:w-1/2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit Issue Report'
+              )}
+            </Button>
+          </div>
         </div>
-        
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Submitting...
-            </>
-          ) : (
-            'Submit Issue Report'
-          )}
-        </Button>
       </form>
     </GlassmorphicCard>
   );
