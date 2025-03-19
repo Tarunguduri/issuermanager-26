@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth as useAuthContext } from '@/context/AuthContext';
 import { UserRole } from '@/services/supabase-service';
@@ -10,25 +10,27 @@ type ProtectedRouteOptions = {
 };
 
 export const useAuth = () => {
-  return useAuthContext();
+  const context = useAuthContext();
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };
 
 export const useProtectedRoute = (options: ProtectedRouteOptions = {}) => {
   const { requiredRole = null, redirectTo = '/' } = options;
-  const { user, isAuthenticated, isLoading } = useAuthContext();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      navigate(redirectTo);
-      return;
-    }
+  if (!isLoading && !isAuthenticated) {
+    navigate(redirectTo);
+    return { user: null, isAuthenticated: false, isLoading: false };
+  }
 
-    if (!isLoading && isAuthenticated && requiredRole && user?.role !== requiredRole) {
-      navigate(redirectTo);
-      return;
-    }
-  }, [isAuthenticated, isLoading, navigate, redirectTo, requiredRole, user?.role]);
+  if (!isLoading && isAuthenticated && requiredRole && user?.role !== requiredRole) {
+    navigate(redirectTo);
+    return { user, isAuthenticated, isLoading };
+  }
 
   return { user, isAuthenticated, isLoading };
 };
