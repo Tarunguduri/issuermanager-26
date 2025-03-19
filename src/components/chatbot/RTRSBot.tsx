@@ -1,9 +1,9 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, ChevronRight, Bot } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import GlassmorphicCard from '@/components/ui/GlassmorphicCard';
+import { Input } from '@/components/ui/input'; // Import the Input component
 
 interface Message {
   id: string;
@@ -231,13 +231,13 @@ const RTRSBot: React.FC = () => {
               {/* Input */}
               <div className="border-t p-3">
                 <div className="flex items-center space-x-2">
-                  <input
+                  <Input
                     type="text"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Type your question..."
-                    className="flex-1 border rounded-md px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="flex-1"
                   />
                   <Button 
                     onClick={handleSend}
