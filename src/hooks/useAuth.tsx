@@ -1,5 +1,5 @@
 
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth as useAuthContext } from '@/context/AuthContext';
 import { UserRole } from '@/services/supabase-service';
@@ -22,15 +22,17 @@ export const useProtectedRoute = (options: ProtectedRouteOptions = {}) => {
   const { user, isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  if (!isLoading && !isAuthenticated) {
-    navigate(redirectTo);
-    return { user: null, isAuthenticated: false, isLoading: false };
-  }
-
-  if (!isLoading && isAuthenticated && requiredRole && user?.role !== requiredRole) {
-    navigate(redirectTo);
-    return { user, isAuthenticated, isLoading };
-  }
+  useEffect(() => {
+    // Only redirect if the authentication state is stable (not loading)
+    // and we're sure the user is not authenticated
+    if (!isLoading) {
+      if (!isAuthenticated) {
+        navigate(redirectTo);
+      } else if (requiredRole && user?.role !== requiredRole) {
+        navigate(redirectTo);
+      }
+    }
+  }, [isAuthenticated, isLoading, navigate, redirectTo, requiredRole, user?.role]);
 
   return { user, isAuthenticated, isLoading };
 };

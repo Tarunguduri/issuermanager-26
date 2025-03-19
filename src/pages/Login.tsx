@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import AuthForm from '@/components/auth/AuthForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
+import PageTransition from '@/components/layout/PageTransition';
 
 const Login = () => {
   const { isAuthenticated, user } = useAuth();
@@ -25,7 +26,9 @@ const Login = () => {
   // If user is already authenticated, redirect to their dashboard
   useEffect(() => {
     if (isAuthenticated && user?.role) {
-      navigate(user.role === 'issuer' ? '/issuer' : '/officer');
+      const redirectPath = user.role === 'issuer' ? '/issuer' : '/officer';
+      console.log('Redirecting authenticated user to:', redirectPath);
+      navigate(redirectPath, { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
 
@@ -34,7 +37,7 @@ const Login = () => {
       <Header />
       
       <main className="flex-1 pt-24 pb-12">
-        <div className="container mx-auto px-4 md:px-6">
+        <PageTransition className="container mx-auto px-4 md:px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -59,7 +62,7 @@ const Login = () => {
             
             <AuthForm initialMode="login" role={selectedRole} />
           </motion.div>
-        </div>
+        </PageTransition>
       </main>
     </div>
   );

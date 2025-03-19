@@ -40,8 +40,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ initialMode = 'login', role }) => {
     category: '',
     designation: '',
     zone: '',
-    phone: '', // Added phone field
-    location: '', // Added location field
+    phone: '', 
+    location: '', 
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,15 +99,16 @@ const AuthForm: React.FC<AuthFormProps> = ({ initialMode = 'login', role }) => {
         );
         toast({ title: "Success", description: "Account created successfully" });
         
-        // Redirect based on role
-        navigate(role === 'issuer' ? '/issuer' : '/officer');
+        // Navigate after successful registration
+        const redirectPath = role === 'issuer' ? '/issuer' : '/officer';
+        console.log('Registration successful, redirecting to:', redirectPath);
+        navigate(redirectPath, { replace: true });
       } else {
-        // Login - fixed here by removing the third argument
+        // Login - using only email and password
         await login(formData.email, formData.password);
         toast({ title: "Success", description: "Logged in successfully" });
         
-        // Redirect based on role
-        navigate(role === 'issuer' ? '/issuer' : '/officer');
+        // The navigation will be handled by the Login component's useEffect
       }
     } catch (error) {
       console.error(error);

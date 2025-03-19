@@ -26,7 +26,9 @@ const Register = () => {
   // If user is already authenticated, redirect to their dashboard
   useEffect(() => {
     if (isAuthenticated && user?.role) {
-      navigate(user.role === 'issuer' ? '/issuer' : '/officer');
+      const redirectPath = user.role === 'issuer' ? '/issuer' : '/officer';
+      console.log('Redirecting authenticated user to:', redirectPath);
+      navigate(redirectPath, { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
 
