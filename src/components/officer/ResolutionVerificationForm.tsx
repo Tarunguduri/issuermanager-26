@@ -5,7 +5,6 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { 
   addAfterImages, 
-  compareBeforeAfterImages, 
   updateAIResolutionStatus, 
   updateIssue 
 } from '@/utils/issues-service';
@@ -14,6 +13,8 @@ import { motion } from 'framer-motion';
 import GlassmorphicCard from '../ui/GlassmorphicCard';
 import { Issue } from '@/utils/issues-service';
 import { Input } from '../ui/input';
+import { Progress } from '../ui/progress';
+import { analyzeImagePair, AIVerificationResult } from '@/utils/ai-verification';
 
 interface ResolutionVerificationFormProps {
   issue: Issue;
@@ -29,6 +30,8 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verified' | 'rejected' | null>(null);
   const [verificationMessage, setVerificationMessage] = useState<string>('');
+  const [verificationResult, setVerificationResult] = useState<AIVerificationResult | null>(null);
+  const [verificationProgress, setVerificationProgress] = useState(0);
   
   const [images, setImages] = useState<{
     file: File;
@@ -46,6 +49,7 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
       // Reset verification status when new images are added
       setVerificationStatus(null);
       setVerificationMessage('');
+      setVerificationResult(null);
     }
   };
 
@@ -59,6 +63,7 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
     // Reset verification status when images are removed
     setVerificationStatus(null);
     setVerificationMessage('');
+    setVerificationResult(null);
   };
 
   const verifyResolution = async () => {
@@ -82,19 +87,38 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
 
     setIsVerifying(true);
     setVerificationStatus('pending');
+    setVerificationProgress(0);
 
     try {
-      // In a real app, this would be a real comparison of actual image URLs
-      // For demo, we'll use the mock implementation
+      // Simulate AI verification stages
+      const stages = [
+        'Initializing AI models...',
+        'Analyzing before image...',
+        'Analyzing after image...',
+        'Comparing structural elements...',
+        'Detecting improvements...',
+        'Finalizing verification...'
+      ];
+      
+      for (let i = 0; i < stages.length; i++) {
+        setVerificationMessage(stages[i]);
+        setVerificationProgress(Math.floor((i / stages.length) * 100));
+        // Simulate processing time for each stage
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      
+      // In a real app, this would be a call to a real AI service
+      // For demo, we'll use the mock implementation from our utility
       const beforeImageUrl = issue.beforeImages[0];
       const afterImageUrl = images[0].preview;
       
-      const result = await compareBeforeAfterImages(beforeImageUrl, afterImageUrl);
+      const result = await analyzeImagePair(beforeImageUrl, afterImageUrl, issue.category);
+      setVerificationResult(result);
       
-      setVerificationStatus(result.resolved ? 'verified' : 'rejected');
-      setVerificationMessage(result.message);
+      setVerificationStatus(result.isResolved ? 'verified' : 'rejected');
+      setVerificationMessage(result.feedback);
       
-      if (result.resolved) {
+      if (result.isResolved) {
         toast({
           title: "Verification Successful",
           description: "AI has verified that the issue has been resolved",
@@ -115,6 +139,7 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
       });
       setVerificationStatus(null);
     } finally {
+      setVerificationProgress(100);
       setIsVerifying(false);
     }
   };
@@ -169,6 +194,7 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
       setImages([]);
       setVerificationStatus(null);
       setVerificationMessage('');
+      setVerificationResult(null);
       
       // Call success callback if provided
       if (onSuccess) {
@@ -275,13 +301,53 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
             </div>
           )}
           
-          {verificationMessage && (
-            <div className={`p-3 rounded-md text-sm ${
+          {isVerifying && (
+            <div className="space-y-2 my-4">
+              <div className="flex justify-between items-center text-xs text-muted-foreground">
+                <span>AI Verification in Progress</span>
+                <span>{verificationProgress}%</span>
+              </div>
+              <Progress value={verificationProgress} className="h-2" />
+              <p className="text-sm text-muted-foreground">{verificationMessage}</p>
+            </div>
+          )}
+          
+          {verificationResult && (
+            <div className={`p-4 rounded-md text-sm space-y-3 ${
               verificationStatus === 'verified' 
                 ? 'bg-green-500/10 text-green-400 border border-green-500/30' 
                 : 'bg-red-500/10 text-red-400 border border-red-500/30'
             }`}>
-              {verificationMessage}
+              <p className="font-semibold">{verificationMessage}</p>
+              
+              {verificationResult.areas && verificationResult.areas.length > 0 && (
+                <div className="space-y-2">
+                  <p className="font-medium">Detailed Analysis:</p>
+                  <div className="grid grid-cols-1 gap-2">
+                    {verificationResult.areas.map((area, index) => (
+                      <div key={index} className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span>{area.name}</span>
+                          <span>{Math.round(area.improvement * 100)}% improved</span>
+                        </div>
+                        <Progress 
+                          value={area.improvement * 100} 
+                          className="h-1.5"
+                          // Use different colors based on improvement level
+                          style={{
+                            ["--theme-primary" as any]: area.improvement > 0.6 
+                              ? 'hsl(142, 76%, 36%)' // Green for good improvement
+                              : area.improvement > 0.3 
+                                ? 'hsl(48, 96%, 53%)' // Yellow for moderate
+                                : 'hsl(0, 84%, 60%)' // Red for poor
+                          }}
+                        />
+                        <p className="text-xs opacity-80">{area.details}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
