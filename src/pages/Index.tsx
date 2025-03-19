@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/layout/Header';
 import RoleSelection from '@/components/auth/RoleSelection';
 import GlassmorphicCard from '@/components/ui/GlassmorphicCard';
+import RTRSBot from '@/components/chatbot/RTRSBot';
 import { ClipboardList, BarChart4, Shield, User, CheckCircle, Lightbulb } from 'lucide-react';
 
 const Index = () => {
@@ -141,6 +142,9 @@ const Index = () => {
           <p>© {new Date().getFullYear()} JAGRUTHI - Smart Citizen Issue Management System. All rights reserved.</p>
         </div>
       </footer>
+      
+      {/* Add the RTRS Bot component */}
+      <RTRSBot />
     </div>
   );
 };
