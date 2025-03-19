@@ -16,7 +16,14 @@ const OfficerDashboard: React.FC = () => {
   
   const refreshIssues = () => {
     const allIssues = getAllIssues();
-    setIssues(allIssues);
+    
+    // Filter issues by officer's category
+    if (user?.category) {
+      const filteredIssues = allIssues.filter(issue => issue.category === user.category);
+      setIssues(filteredIssues);
+    } else {
+      setIssues(allIssues);
+    }
   };
   
   const getStatusCount = (status: string) => {
@@ -34,7 +41,7 @@ const OfficerDashboard: React.FC = () => {
       <div>
         <h1 className="text-3xl font-bold">Officer Dashboard</h1>
         <p className="text-muted-foreground mt-1">
-          Manage and resolve reported issues
+          {user?.category ? `Manage and resolve reported ${user.category} issues` : 'Manage and resolve reported issues'}
         </p>
       </div>
       
