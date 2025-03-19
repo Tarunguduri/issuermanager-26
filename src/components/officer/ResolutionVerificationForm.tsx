@@ -1,23 +1,22 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  addAfterImages, 
-  updateAIResolutionStatus, 
-  updateIssue 
-} from '@/utils/issues-service';
 import { Loader2, Upload, X, CheckCircle2, AlertCircle, Layers } from 'lucide-react';
 import { motion } from 'framer-motion';
 import GlassmorphicCard from '../ui/GlassmorphicCard';
-import { Issue } from '@/utils/issues-service';
-import { Input } from '../ui/input';
 import { Progress } from '../ui/progress';
 import { analyzeImagePair, AIVerificationResult } from '@/utils/ai-verification';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  getIssueImages,
+  uploadIssueImage,
+  createAIVerification,
+  updateIssue
+} from '@/services/supabase-service';
 
 interface ResolutionVerificationFormProps {
-  issue: Issue;
+  issue: any;
   onSuccess?: () => void;
 }
 
@@ -26,17 +25,38 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
   onSuccess 
 }) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verified' | 'rejected' | null>(null);
   const [verificationMessage, setVerificationMessage] = useState<string>('');
   const [verificationResult, setVerificationResult] = useState<AIVerificationResult | null>(null);
   const [verificationProgress, setVerificationProgress] = useState(0);
+  const [beforeImages, setBeforeImages] = useState<string[]>([]);
   
   const [images, setImages] = useState<{
     file: File;
     preview: string;
   }[]>([]);
+
+  useEffect(() => {
+    // Load before images for the issue
+    const loadBeforeImages = async () => {
+      try {
+        const imagesData = await getIssueImages(issue.id, 'before');
+        setBeforeImages(imagesData.map(img => img.image_url));
+      } catch (error) {
+        console.error('Error loading before images:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load issue images",
+          variant: "destructive"
+        });
+      }
+    };
+
+    loadBeforeImages();
+  }, [issue.id, toast]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -76,7 +96,7 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
       return;
     }
 
-    if (!issue.beforeImages || issue.beforeImages.length === 0) {
+    if (beforeImages.length === 0) {
       toast({
         title: "Validation Error",
         description: "No 'before' images available for comparison",
@@ -109,7 +129,7 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
       
       // In a real app, this would be a call to a real AI service
       // For demo, we'll use the mock implementation from our utility
-      const beforeImageUrl = issue.beforeImages[0];
+      const beforeImageUrl = beforeImages[0];
       const afterImageUrl = images[0].preview;
       
       const result = await analyzeImagePair(beforeImageUrl, afterImageUrl, issue.category);
@@ -165,23 +185,35 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
       return;
     }
     
+    if (!user) {
+      toast({
+        title: "Auth Error",
+        description: "You must be logged in to submit a resolution",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
-      // In a real app, we'd upload the images to storage and get URLs
-      // For this demo, we'll use the file names as image URLs
-      const imageNames = images.map(img => img.file.name);
+      // Upload after images to Supabase
+      for (const image of images) {
+        await uploadIssueImage(issue.id, image.file, 'after', user.id);
+      }
       
-      // Add the after images to the issue
-      await addAfterImages(issue.id, imageNames);
-      
-      // Update AI resolution status
-      await updateAIResolutionStatus(issue.id, 'verified');
+      // Create AI verification record
+      await createAIVerification({
+        issue_id: issue.id,
+        is_valid: true,
+        processing_steps: verificationResult,
+        verification_type: 'resolution'
+      });
       
       // Mark the issue as resolved
       await updateIssue(issue.id, {
         status: 'resolved',
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
       });
       
       toast({
@@ -220,18 +252,22 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
       <div className="mb-6">
         <h4 className="text-sm font-medium mb-2">Before Images</h4>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {issue.beforeImages && issue.beforeImages.map((image, index) => (
-            <div 
-              key={`before-${index}`}
-              className="aspect-square rounded-md overflow-hidden border border-border"
-            >
-              <img
-                src={image}
-                alt={`Before ${index}`}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
+          {beforeImages.length > 0 ? (
+            beforeImages.map((image, index) => (
+              <div 
+                key={`before-${index}`}
+                className="aspect-square rounded-md overflow-hidden border border-border"
+              >
+                <img
+                  src={image}
+                  alt={`Before ${index}`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">No before images available</p>
+          )}
         </div>
       </div>
       

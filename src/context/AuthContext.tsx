@@ -1,24 +1,20 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { categories, zones, designations } from '@/utils/issues-service';
-
-type UserRole = 'issuer' | 'officer' | null;
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  category?: string; // For officers
-  designation?: string; // For officers
-  zone?: string; // For officers
-}
+import { 
+  signIn, 
+  signUp, 
+  signOut, 
+  getCurrentUser, 
+  UserData, 
+  UserRole
+} from '@/services/supabase-service';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
-  user: User | null;
+  user: UserData | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string, role: UserRole) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   register: (
     name: string, 
     email: string, 
@@ -26,7 +22,9 @@ interface AuthContextType {
     role: UserRole, 
     category?: string, 
     designation?: string, 
-    zone?: string
+    zone?: string,
+    phone?: string,
+    location?: string
   ) => Promise<void>;
   logout: () => void;
   setUserRole: (role: UserRole) => void;
@@ -34,58 +32,46 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock data store for demo purposes
-const USERS_STORAGE_KEY = 'jagruthi_users';
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  // Load user data from localStorage on initial mount
+  // Load user data on initial mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    const loadUser = async () => {
+      try {
+        const userData = await getCurrentUser();
+        setUser(userData);
+      } catch (error) {
+        console.error('Error loading user:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadUser();
   }, []);
 
-  // Save current user to localStorage whenever it changes
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem('currentUser', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('currentUser');
-    }
-  }, [user]);
-
-  const login = async (email: string, password: string, role: UserRole): Promise<void> => {
+  const login = async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await signIn(email, password);
+      const userData = await getCurrentUser();
+      setUser(userData);
       
-      // Get users from storage
-      const usersJson = localStorage.getItem(USERS_STORAGE_KEY) || '[]';
-      const users: User[] = JSON.parse(usersJson);
-      
-      // Find user with matching email
-      const foundUser = users.find(u => u.email === email);
-      
-      if (!foundUser) {
-        throw new Error('Invalid email or password');
-      }
-      
-      // In a real app, you would verify the password hash here
-      // For demo, we'll just set the user
-      setUser({
-        ...foundUser,
-        role: role || foundUser.role
+      toast({
+        title: "Login Successful",
+        description: `Welcome back, ${userData?.name || 'User'}!`,
       });
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
+      toast({
+        title: "Login Failed",
+        description: error.message || "An error occurred during login",
+        variant: "destructive"
+      });
       throw error;
     } finally {
       setIsLoading(false);
@@ -99,53 +85,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     role: UserRole,
     category?: string,
     designation?: string,
-    zone?: string
+    zone?: string,
+    phone?: string,
+    location?: string
   ): Promise<void> => {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Get existing users
-      const usersJson = localStorage.getItem(USERS_STORAGE_KEY) || '[]';
-      const users: User[] = JSON.parse(usersJson);
-      
-      // Check if user already exists
-      if (users.some(user => user.email === email)) {
-        throw new Error('User with this email already exists');
-      }
-      
-      // Create new user
-      const newUser: User = {
-        id: crypto.randomUUID(),
+      await signUp(email, password, {
         name,
-        email,
         role,
+        phone: phone || '',
+        location: location || '',
         ...(role === 'officer' && {
-          category,
-          designation,
-          zone
+          category: category || '',
+          designation: designation || '',
+          zone: zone || ''
         })
-      };
+      });
       
-      // Add user to storage
-      users.push(newUser);
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+      toast({
+        title: "Registration Successful",
+        description: "Your account has been created. You can now log in.",
+      });
       
-      // Set as current user
-      setUser(newUser);
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
+      toast({
+        title: "Registration Failed",
+        description: error.message || "An error occurred during registration",
+        variant: "destructive"
+      });
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const logout = () => {
-    setUser(null);
+  const logout = async () => {
+    try {
+      await signOut();
+      setUser(null);
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Logout Failed",
+        description: error.message || "An error occurred during logout",
+        variant: "destructive"
+      });
+    }
   };
 
   const setUserRole = (role: UserRole) => {

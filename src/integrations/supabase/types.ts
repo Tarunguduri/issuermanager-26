@@ -9,13 +9,242 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      ai_verifications: {
+        Row: {
+          id: string
+          is_valid: boolean | null
+          issue_id: string | null
+          processing_steps: Json | null
+          verification_type: string
+          verified_at: string | null
+        }
+        Insert: {
+          id?: string
+          is_valid?: boolean | null
+          issue_id?: string | null
+          processing_steps?: Json | null
+          verification_type: string
+          verified_at?: string | null
+        }
+        Update: {
+          id?: string
+          is_valid?: boolean | null
+          issue_id?: string | null
+          processing_steps?: Json | null
+          verification_type?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_verifications_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      issue_comments: {
+        Row: {
+          author_id: string | null
+          author_role: string
+          content: string
+          created_at: string | null
+          id: string
+          issue_id: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          author_role: string
+          content: string
+          created_at?: string | null
+          id?: string
+          issue_id?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          author_role?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          issue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issue_comments_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      issue_images: {
+        Row: {
+          id: string
+          image_type: string
+          image_url: string
+          issue_id: string | null
+          uploaded_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          id?: string
+          image_type: string
+          image_url: string
+          issue_id?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          id?: string
+          image_type?: string
+          image_url?: string
+          issue_id?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issue_images_issue_id_fkey"
+            columns: ["issue_id"]
+            isOneToOne: false
+            referencedRelation: "issues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      issues: {
+        Row: {
+          assigned_to: string | null
+          category: string
+          created_at: string | null
+          description: string
+          id: string
+          location: string
+          priority: string
+          status: string
+          title: string
+          updated_at: string | null
+          user_id: string | null
+          zone: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          category: string
+          created_at?: string | null
+          description: string
+          id?: string
+          location: string
+          priority: string
+          status?: string
+          title: string
+          updated_at?: string | null
+          user_id?: string | null
+          zone?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string
+          id?: string
+          location?: string
+          priority?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string | null
+          zone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "issues_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "officers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "issues_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      officers: {
+        Row: {
+          category: string
+          created_at: string | null
+          designation: string
+          email: string
+          id: string
+          name: string
+          phone: string
+          zone: string
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          designation: string
+          email: string
+          id: string
+          name: string
+          phone: string
+          zone: string
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          designation?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string
+          zone?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          location: string
+          name: string
+          phone: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id: string
+          location: string
+          name: string
+          phone: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          location?: string
+          name?: string
+          phone?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_officer: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

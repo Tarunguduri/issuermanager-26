@@ -2,9 +2,10 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth as useAuthContext } from '@/context/AuthContext';
+import { UserRole } from '@/services/supabase-service';
 
 type ProtectedRouteOptions = {
-  requiredRole?: 'issuer' | 'officer' | null;
+  requiredRole?: UserRole;
   redirectTo?: string;
 };
 
