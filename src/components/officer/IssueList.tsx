@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Issue, updateIssue } from '@/utils/issues-service';
 import { useAuth } from '@/hooks/useAuth';
@@ -44,6 +43,7 @@ import GlassmorphicCard from '../ui/GlassmorphicCard';
 interface IssueListProps {
   issues: Issue[];
   onUpdate: () => void;
+  isLoading?: boolean; // Added isLoading prop
 }
 
 const getStatusColor = (status: string) => {
@@ -74,7 +74,7 @@ const getPriorityColor = (priority: string) => {
   }
 };
 
-const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate }) => {
+const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate, isLoading = false }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState('all');

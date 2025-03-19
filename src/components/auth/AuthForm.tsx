@@ -39,7 +39,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ initialMode = 'login', role }) => {
     confirmPassword: '',
     category: '',
     designation: '',
-    zone: ''
+    zone: '',
+    phone: '', // Added phone field
+    location: '', // Added location field
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,11 +62,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ initialMode = 'login', role }) => {
         // Validation
         if (formData.password !== formData.confirmPassword) {
           toast({ title: "Error", description: "Passwords don't match", variant: "destructive" });
+          setIsLoading(false);
           return;
         }
         
         if (!formData.name || !formData.email || !formData.password) {
           toast({ title: "Error", description: "All fields are required", variant: "destructive" });
+          setIsLoading(false);
           return;
         }
 
@@ -86,18 +90,20 @@ const AuthForm: React.FC<AuthFormProps> = ({ initialMode = 'login', role }) => {
           formData.name, 
           formData.email, 
           formData.password, 
-          role,
+          role || 'issuer',
           role === 'officer' ? formData.category : undefined,
           role === 'officer' ? formData.designation : undefined,
-          role === 'officer' ? formData.zone : undefined
+          role === 'officer' ? formData.zone : undefined,
+          formData.phone || undefined,
+          formData.location || undefined
         );
         toast({ title: "Success", description: "Account created successfully" });
         
         // Redirect based on role
         navigate(role === 'issuer' ? '/issuer' : '/officer');
       } else {
-        // Login
-        await login(formData.email, formData.password, role);
+        // Login - fixed here by removing the third argument
+        await login(formData.email, formData.password);
         toast({ title: "Success", description: "Logged in successfully" });
         
         // Redirect based on role

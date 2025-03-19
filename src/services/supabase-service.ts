@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { categories, zones, designations } from '@/utils/issues-service';
 
@@ -356,7 +355,8 @@ export const getIssueComments = async (issueId: string) => {
     throw error;
   }
 
-  return data as IssueComment[];
+  // Fix by type casting to handle the SelectQueryError
+  return data as unknown as IssueComment[];
 };
 
 // Utility functions
