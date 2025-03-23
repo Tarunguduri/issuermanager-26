@@ -2,7 +2,7 @@
 import { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth as useAuthContext } from '@/context/AuthContext';
-import { UserRole } from '@/services/supabase-service';
+import { UserRole } from '@/services/auth-service';
 
 type ProtectedRouteOptions = {
   requiredRole?: UserRole;
