@@ -26,16 +26,19 @@ export const useRealtime = <T = any>(
     // Create a unique channel name
     const channelName = `db-changes-${table}-${event}-${Math.random().toString(36).substring(2, 15)}`;
     
-    // Set up the channel
+    // Set up the channel with the correct subscription configuration
     const channel = supabase.channel(channelName);
     
-    // Add the postgres_changes listener with the correct configuration
-    channel
-      .on(
-        'postgres_changes',
-        { event, schema, table, filter },
-        (payload) => callback(payload as RealtimePostgresChangesPayload<T>)
-      )
+    // Configure the channel with postgres_changes and subscribe
+    const subscription = channel
+      .on('postgres_changes', {
+        event: event,
+        schema: schema,
+        table: table,
+        filter: filter
+      }, (payload) => {
+        callback(payload as RealtimePostgresChangesPayload<T>);
+      })
       .subscribe();
 
     // Cleanup function to remove the channel
