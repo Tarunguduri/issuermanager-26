@@ -1,4 +1,3 @@
-
 export interface Issue {
   id: string;
   title: string;
@@ -13,6 +12,10 @@ export interface Issue {
   assignedOfficerName?: string;
   category: string;
   location: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
   zone?: string;
   images?: string[];
   beforeImages?: string[];

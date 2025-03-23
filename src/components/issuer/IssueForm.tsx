@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -246,7 +245,10 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
         description: formData.description,
         category: formData.category,
         location: formData.location,
-        coordinates: formData.coordinates,
+        coordinates: {
+          lat: formData.coordinates.lat,
+          lng: formData.coordinates.lng
+        },
         priority: formData.priority,
         status: 'pending',
         issuerId: user.id,
