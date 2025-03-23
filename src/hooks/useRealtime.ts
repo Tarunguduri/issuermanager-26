@@ -18,7 +18,7 @@ interface UseRealtimeOptions {
  */
 export const useRealtime = <T = any>(
   options: UseRealtimeOptions,
-  callback: (payload: RealtimePostgresChangesPayload<T>) => void
+  callback: (payload: any) => void
 ) => {
   const { event = '*', schema = 'public', table, filter } = options;
 
@@ -26,15 +26,15 @@ export const useRealtime = <T = any>(
     // Create a unique channel name
     const channelName = `db-changes-${table}-${event}-${Math.random().toString(36).substring(2, 15)}`;
     
-    // Create channel first
     const channel = supabase.channel(channelName);
     
-    // Use type assertion to properly configure the channel
-    const subscription = channel.on(
-      'postgres_changes' as any,
-      { event, schema, table, filter },
-      (payload) => callback(payload as RealtimePostgresChangesPayload<T>)
-    ).subscribe();
+    const subscription = channel
+      .on(
+        'postgres_changes',
+        { event, schema, table, filter },
+        callback
+      )
+      .subscribe();
 
     // Cleanup function to remove the channel
     return () => {
