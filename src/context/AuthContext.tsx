@@ -6,10 +6,9 @@ import {
   signOut, 
   getCurrentUser, 
   UserData, 
-  UserRole 
-} from '@/services/auth-service';
+  UserRole
+} from '@/services/supabase-service';
 import { useToast } from '@/hooks/use-toast';
-import { showErrorToast, ServiceError } from '@/services/base-service';
 
 interface AuthContextType {
   user: UserData | null;
@@ -46,7 +45,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(userData);
       } catch (error) {
         console.error('Error loading user:', error);
-        showErrorToast(error as ServiceError);
       } finally {
         setIsLoading(false);
       }
@@ -69,7 +67,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     } catch (error: any) {
       console.error('Login error:', error);
-      showErrorToast(error as ServiceError);
+      toast({
+        title: "Login Failed",
+        description: error.message || "An error occurred during login",
+        variant: "destructive"
+      });
       throw error;
     } finally {
       setIsLoading(false);
@@ -109,7 +111,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
     } catch (error: any) {
       console.error('Registration error:', error);
-      showErrorToast(error as ServiceError);
+      toast({
+        title: "Registration Failed",
+        description: error.message || "An error occurred during registration",
+        variant: "destructive"
+      });
       throw error;
     } finally {
       setIsLoading(false);
@@ -126,7 +132,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     } catch (error: any) {
       console.error('Logout error:', error);
-      showErrorToast(error as ServiceError);
+      toast({
+        title: "Logout Failed",
+        description: error.message || "An error occurred during logout",
+        variant: "destructive"
+      });
     }
   };
 
