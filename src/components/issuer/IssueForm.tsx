@@ -14,9 +14,10 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { createIssue, verifyImageWithAI } from '@/utils/issues-service';
-import { Loader2, Upload, X, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Loader2, Upload, X, CheckCircle2, AlertCircle, MapPin } from 'lucide-react';
 import { motion } from 'framer-motion';
 import GlassmorphicCard from '../ui/GlassmorphicCard';
+import LocationPicker from '../maps/LocationPicker';
 
 interface IssueFormProps {
   onSuccess?: () => void;
@@ -46,12 +47,17 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verified' | 'rejected' | null>(null);
+  const [showMap, setShowMap] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     category: '',
     location: '',
+    coordinates: {
+      lat: 0,
+      lng: 0
+    },
     priority: 'medium' as 'low' | 'medium' | 'high'
   });
   
@@ -86,6 +92,17 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
       // Reset verification status when new images are added
       setVerificationStatus(null);
     }
+  };
+
+  const handleLocationSelect = (location: { lat: number; lng: number; address: string }) => {
+    setFormData(prev => ({
+      ...prev,
+      location: location.address,
+      coordinates: {
+        lat: location.lat,
+        lng: location.lng
+      }
+    }));
   };
 
   const removeImage = (index: number) => {
@@ -229,6 +246,7 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
         description: formData.description,
         category: formData.category,
         location: formData.location,
+        coordinates: formData.coordinates,
         priority: formData.priority,
         status: 'pending',
         issuerId: user.id,
@@ -249,6 +267,10 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
         description: '',
         category: '',
         location: '',
+        coordinates: {
+          lat: 0,
+          lng: 0
+        },
         priority: 'medium'
       });
       
@@ -256,6 +278,7 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
       images.forEach(img => URL.revokeObjectURL(img.preview));
       setImages([]);
       setVerificationStatus(null);
+      setShowMap(false);
       
       // Call success callback if provided
       if (onSuccess) {
@@ -331,7 +354,19 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="location">Location</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="location">Location</Label>
+            <Button 
+              type="button" 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowMap(!showMap)}
+              className="text-primary"
+            >
+              <MapPin className="h-4 w-4 mr-1" />
+              {showMap ? "Hide Map" : "Select on Map"}
+            </Button>
+          </div>
           <Input
             id="location"
             name="location"
@@ -341,6 +376,35 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
             className="glass-input"
             required
           />
+          
+          {formData.coordinates.lat !== 0 && formData.coordinates.lng !== 0 && (
+            <p className="text-xs text-muted-foreground">
+              Coordinates: {formData.coordinates.lat.toFixed(6)}, {formData.coordinates.lng.toFixed(6)}
+            </p>
+          )}
+          
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ 
+              height: showMap ? 'auto' : 0,
+              opacity: showMap ? 1 : 0
+            }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden"
+          >
+            {showMap && (
+              <div className="pt-4">
+                <LocationPicker 
+                  onLocationSelect={handleLocationSelect}
+                  initialLocation={
+                    formData.coordinates.lat !== 0 && formData.coordinates.lng !== 0
+                      ? formData.coordinates
+                      : undefined
+                  }
+                />
+              </div>
+            )}
+          </motion.div>
         </div>
         
         <div className="space-y-2">
