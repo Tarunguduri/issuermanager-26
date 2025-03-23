@@ -26,22 +26,20 @@ export const useRealtime = <T = any>(
     let channel: RealtimeChannel;
 
     const setupSubscription = async () => {
-      // Build channel configuration
-      const channelConfig = {
-        event,
-        schema,
-        table,
-      };
-
       // Create a unique channel name
       const channelName = `db-changes-${table}-${event}`;
 
-      // Set up the subscription
+      // Set up the subscription with the correct API structure
       channel = supabase
         .channel(channelName)
         .on(
           'postgres_changes',
-          channelConfig,
+          {
+            event,
+            schema,
+            table,
+            filter
+          },
           (payload) => {
             callback(payload as RealtimePostgresChangesPayload<T>);
           }
