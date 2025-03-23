@@ -23,36 +23,24 @@ export const useRealtime = <T = any>(
   const { event = '*', schema = 'public', table, filter } = options;
 
   useEffect(() => {
-    let channel: RealtimeChannel;
+    // Create a unique channel name
+    const channelName = `db-changes-${table}-${event}-${Math.random().toString(36).substring(2, 15)}`;
+    
+    // Set up the channel
+    const channel = supabase.channel(channelName);
+    
+    // Add the postgres_changes listener with the correct configuration
+    channel
+      .on(
+        'postgres_changes',
+        { event, schema, table, filter },
+        (payload) => callback(payload as RealtimePostgresChangesPayload<T>)
+      )
+      .subscribe();
 
-    const setupSubscription = async () => {
-      // Create a unique channel name
-      const channelName = `db-changes-${table}-${event}`;
-
-      // Set up the subscription with the correct API structure
-      channel = supabase
-        .channel(channelName)
-        .on(
-          'postgres_changes',
-          {
-            event,
-            schema,
-            table,
-            filter
-          },
-          (payload) => {
-            callback(payload as RealtimePostgresChangesPayload<T>);
-          }
-        )
-        .subscribe();
-    };
-
-    setupSubscription();
-
+    // Cleanup function to remove the channel
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      supabase.removeChannel(channel);
     };
   }, [event, schema, table, filter, callback]);
 };
