@@ -28,21 +28,24 @@ export const useRealtime = <T = any>(
     const setupSubscription = async () => {
       // Build channel configuration
       const channelConfig = {
+        event,
         schema,
         table,
-        event,
       };
 
-      if (filter) {
-        // @ts-ignore - type definition is incomplete in supabase-js
-        channelConfig.filter = filter;
-      }
+      // Create a unique channel name
+      const channelName = `db-changes-${table}-${event}`;
 
+      // Set up the subscription
       channel = supabase
-        .channel('db-changes')
-        .on('postgres_changes', channelConfig, (payload: any) => {
-          callback(payload);
-        })
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          channelConfig,
+          (payload) => {
+            callback(payload as RealtimePostgresChangesPayload<T>);
+          }
+        )
         .subscribe();
     };
 
