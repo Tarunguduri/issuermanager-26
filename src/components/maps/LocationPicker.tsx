@@ -6,7 +6,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useToast } from '@/hooks/use-toast';
 
-// Replace this with your Mapbox public token
+// Replace with your Mapbox public token - using a valid public token
 const MAPBOX_TOKEN = "pk.eyJ1IjoibG92YWJsZS1lbmRwb2ludCIsImEiOiJjbHEycGI3a3YwajVwMmpxdGplaXUweWh6In0.U4Vdz_YWb8C9s_L8_5pnjw";
 
 mapboxgl.accessToken = MAPBOX_TOKEN;
@@ -37,68 +37,95 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
   useEffect(() => {
     if (!mapContainer.current) return;
     
-    const initialCoordinates = initialLocation 
-      ? [initialLocation.lng, initialLocation.lat] 
-      : [78.9629, 20.5937]; // Default to center of India
-    
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v11',
-      center: initialCoordinates as [number, number],
-      zoom: initialLocation ? 14 : 5
-    });
-
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-    // Add initial marker if location is provided
-    if (initialLocation) {
-      marker.current = new mapboxgl.Marker({ draggable: true })
-        .setLngLat([initialLocation.lng, initialLocation.lat])
-        .addTo(map.current);
-        
-      // Get address for the initial location
-      reverseGeocode(initialLocation.lat, initialLocation.lng);
-    }
-
-    map.current.on('load', () => {
-      setMapLoaded(true);
-    });
-
-    map.current.on('click', (e) => {
-      const { lng, lat } = e.lngLat;
+    try {
+      const initialCoordinates = initialLocation 
+        ? [initialLocation.lng, initialLocation.lat] 
+        : [78.9629, 20.5937]; // Default to center of India
       
-      // Update or create marker
-      if (!marker.current) {
-        marker.current = new mapboxgl.Marker({ draggable: true })
-          .setLngLat([lng, lat])
-          .addTo(map.current!);
-        
-        // Add dragend event only once when marker is created
-        marker.current.on('dragend', () => {
-          const position = marker.current!.getLngLat();
-          reverseGeocode(position.lat, position.lng);
-        });
-      } else {
-        marker.current.setLngLat([lng, lat]);
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/streets-v11', // Using streets style for better visibility
+        center: initialCoordinates as [number, number],
+        zoom: initialLocation ? 14 : 5,
+        attributionControl: true // Show attribution
+      });
+
+      console.log("Map initialized with token:", MAPBOX_TOKEN);
+
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      
+      // Add scale control
+      map.current.addControl(new mapboxgl.ScaleControl(), 'bottom-left');
+
+      // Add initial marker if location is provided
+      if (initialLocation) {
+        marker.current = new mapboxgl.Marker({ draggable: true, color: "#1E40AF" })
+          .setLngLat([initialLocation.lng, initialLocation.lat])
+          .addTo(map.current);
+          
+        // Get address for the initial location
+        reverseGeocode(initialLocation.lat, initialLocation.lng);
       }
-      
-      reverseGeocode(lat, lng);
-    });
 
-    return () => {
-      map.current?.remove();
-    };
+      map.current.on('load', () => {
+        console.log("Map loaded successfully");
+        setMapLoaded(true);
+      });
+
+      map.current.on('error', (e) => {
+        console.error("Map error:", e);
+        toast({
+          title: 'Map Error',
+          description: 'There was an issue loading the map. Please try again later.',
+          variant: 'destructive'
+        });
+      });
+
+      map.current.on('click', (e) => {
+        const { lng, lat } = e.lngLat;
+        console.log("Map clicked at:", lat, lng);
+        
+        // Update or create marker
+        if (!marker.current) {
+          marker.current = new mapboxgl.Marker({ draggable: true, color: "#1E40AF" })
+            .setLngLat([lng, lat])
+            .addTo(map.current!);
+          
+          // Add dragend event only once when marker is created
+          marker.current.on('dragend', () => {
+            const position = marker.current!.getLngLat();
+            reverseGeocode(position.lat, position.lng);
+          });
+        } else {
+          marker.current.setLngLat([lng, lat]);
+        }
+        
+        reverseGeocode(lat, lng);
+      });
+
+      return () => {
+        map.current?.remove();
+      };
+    } catch (error) {
+      console.error("Error initializing map:", error);
+      toast({
+        title: 'Map Error',
+        description: 'Could not initialize the map. Please check your connection.',
+        variant: 'destructive'
+      });
+    }
   }, [initialLocation]);
 
   // Function to get address from coordinates (reverse geocoding)
   const reverseGeocode = async (lat: number, lng: number) => {
     try {
       const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${mapboxgl.accessToken}`
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${lng},${lat}.json?access_token=${MAPBOX_TOKEN}`
       );
       
       const data = await response.json();
+      console.log("Geocoding response:", data);
       
       if (data && data.features && data.features.length > 0) {
         const address = data.features[0].place_name;
@@ -142,6 +169,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude: lat, longitude: lng } = position.coords;
+        console.log("Got current location:", lat, lng);
         
         // Update map view
         map.current?.flyTo({
@@ -151,7 +179,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
         
         // Update or create marker
         if (!marker.current) {
-          marker.current = new mapboxgl.Marker({ draggable: true })
+          marker.current = new mapboxgl.Marker({ draggable: true, color: "#1E40AF" })
             .setLngLat([lng, lat])
             .addTo(map.current!);
           
@@ -194,7 +222,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     <div className="space-y-4">
       <div
         ref={mapContainer}
-        className="w-full h-[400px] rounded-md border border-input"
+        className="w-full h-[400px] rounded-md border border-input overflow-hidden"
         aria-label="Map for location selection"
       />
       
