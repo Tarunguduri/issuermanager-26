@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 // Re-export types and functions from supabase-service with field mapping
@@ -196,13 +195,12 @@ export const updateIssue = async (issueId: string, updateData: Partial<Issue>) =
   return mapDbIssueToFrontend(result as unknown as DbIssue);
 };
 
-// Add the missing updateIssueStatus function
-export const updateIssueStatus = async (issueId: string, status: string) => {
-  // Validate that status is one of the accepted values
-  const validStatus = ['pending', 'in-progress', 'resolved', 'rejected'];
-  const statusToUse = validStatus.includes(status) ? status : 'pending';
-  
-  const result = await updateDbIssue(issueId, { status: statusToUse });
+// Add the updateIssueStatus function with proper typing
+export const updateIssueStatus = async (
+  issueId: string, 
+  status: 'pending' | 'in-progress' | 'resolved' | 'rejected'
+) => {
+  const result = await updateDbIssue(issueId, { status });
   return mapDbIssueToFrontend(result as unknown as DbIssue);
 };
 

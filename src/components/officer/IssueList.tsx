@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Issue, IssueComment, addComment, updateIssueStatus } from '@/utils/issues-service';
 import { formatDistanceToNow } from 'date-fns';
@@ -93,11 +92,11 @@ const IssueCard: React.FC<{ issue: Issue; onUpdate: () => void }> = ({ issue, on
     }
   };
 
-  const handleStatusChange = async (status: string) => {
+  const handleStatusChange = async (status: Issue['status']) => {
     setIsUpdatingStatus(true);
     try {
       await updateIssueStatus(issue.id, status);
-      setSelectedStatus(status as Issue['status']);
+      setSelectedStatus(status);
       toast({ title: 'Status updated successfully' });
       
       // Invalidate the query for the issue list to trigger a refetch
