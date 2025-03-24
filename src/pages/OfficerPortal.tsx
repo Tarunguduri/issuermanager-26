@@ -3,6 +3,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { useProtectedRoute } from '@/hooks/useAuth';
 import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 import OfficerDashboard from '@/components/officer/OfficerDashboard';
 import PageTransition from '@/components/layout/PageTransition';
 
@@ -29,6 +30,8 @@ const OfficerPortal = () => {
           <OfficerDashboard />
         </div>
       </PageTransition>
+      
+      <Footer />
     </div>
   );
 };

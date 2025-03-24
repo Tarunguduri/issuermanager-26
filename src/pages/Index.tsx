@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 import RoleSelection from '@/components/auth/RoleSelection';
 import GlassmorphicCard from '@/components/ui/GlassmorphicCard';
 import RTRSBot from '@/components/chatbot/RTRSBot';
@@ -137,11 +137,7 @@ const Index = () => {
         </div>
       </main>
       
-      <footer className="border-t border-border py-6">
-        <div className="container mx-auto px-4 md:px-6 text-center text-muted-foreground">
-          <p>© {new Date().getFullYear()} JAGRUTHI - Smart Citizen Issue Management System. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
       
       {/* Add the RTRS Bot component */}
       <RTRSBot />

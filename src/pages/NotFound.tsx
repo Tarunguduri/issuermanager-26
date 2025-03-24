@@ -4,6 +4,7 @@ import { useLocation, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 const NotFound = () => {
   const location = useLocation();
@@ -35,6 +36,8 @@ const NotFound = () => {
           </Button>
         </motion.div>
       </main>
+      
+      <Footer />
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 import AuthForm from '@/components/auth/AuthForm';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -64,6 +65,8 @@ const Login = () => {
           </motion.div>
         </PageTransition>
       </main>
+      
+      <Footer />
     </div>
   );
 };

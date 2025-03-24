@@ -44,12 +44,15 @@ const Header: React.FC = () => {
       )}
     >
       <div className="container mx-auto px-4 md:px-6 flex items-center justify-between">
-        <Link 
-          to="/" 
-          className="text-xl font-bold flex items-center gap-2 transition-transform hover:scale-[1.02] active:scale-[0.98] text-gradient-blue-green"
-        >
-          JAGRUTHI
-        </Link>
+        <div className="flex flex-col items-start">
+          <Link 
+            to="/" 
+            className="text-xl font-bold flex items-center gap-2 transition-transform hover:scale-[1.02] active:scale-[0.98] text-gradient-blue-green"
+          >
+            JAGRUTHI
+          </Link>
+          <span className="text-xs text-muted-foreground -mt-1">Jagruthi by RE-VIEW</span>
+        </div>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-6">

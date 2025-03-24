@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProtectedRoute } from '@/hooks/useAuth';
 import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 import PageTransition from '@/components/layout/PageTransition';
 import { getIssueById } from '@/utils/issues-service';
 import { Button } from '@/components/ui/button';
@@ -102,6 +103,8 @@ const IssueDetails = () => {
           </div>
         </PageTransition>
       </main>
+      
+      <Footer />
     </div>
   );
 };
