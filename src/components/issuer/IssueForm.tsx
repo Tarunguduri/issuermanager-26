@@ -245,14 +245,11 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
         description: formData.description,
         category: formData.category,
         location: formData.location,
-        coordinates: {
-          lat: formData.coordinates.lat,
-          lng: formData.coordinates.lng
-        },
         priority: formData.priority,
         status: 'pending',
         userId: user.id,
         beforeImages: imageNames,
+        images: imageNames,
         ai_verification_status: 'verified'
       });
       

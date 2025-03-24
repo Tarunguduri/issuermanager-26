@@ -21,6 +21,10 @@ export interface Issue {
   category: string;
   description: string;
   location: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
   priority: 'low' | 'medium' | 'high';
   status: 'pending' | 'in-progress' | 'resolved' | 'rejected';
   zone?: string;
@@ -31,6 +35,7 @@ export interface Issue {
   // Added fields for UI convenience
   assignedOfficerName?: string;
   issuerName?: string;
+  images?: string[];
   beforeImages?: string[];
   afterImages?: string[];
   ai_verification_status?: string;
@@ -99,7 +104,9 @@ const mapDbIssueToFrontend = (dbIssue: DbIssue): Issue => ({
   assignedOfficerName: dbIssue.officer?.name,
   officer: dbIssue.officer,
   user: dbIssue.user,
-  comments: dbIssue.comments?.map(mapDbCommentToFrontend)
+  comments: dbIssue.comments?.map(mapDbCommentToFrontend),
+  // Include images if present
+  images: dbIssue.images
 });
 
 const mapFrontendIssueToDb = (issue: Partial<Issue>): Partial<DbIssue> => {
@@ -131,6 +138,9 @@ const mapFrontendIssueToDb = (issue: Partial<Issue>): Partial<DbIssue> => {
   if (issue.assignedTo !== undefined) {
     dbIssue.assigned_to = issue.assignedTo;
   }
+  
+  // We don't map UI-specific fields like assignedOfficerName, issuerName, etc.
+  // as they're not stored directly in the database
   
   return dbIssue;
 };

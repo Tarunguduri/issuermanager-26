@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Issue, updateIssue, IssueComment } from '@/utils/issues-service';
 import { useAuth } from '@/hooks/useAuth';
@@ -115,7 +114,7 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate, isLoading = fal
     
     try {
       // Create a new comment object with proper structure
-      const newCommentObj: Partial<IssueComment> = {
+      const newCommentObj: IssueComment = {
         id: crypto.randomUUID(),
         issueId: selectedIssue.id,
         content: newComment,
@@ -131,7 +130,7 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate, isLoading = fal
       await updateIssue(selectedIssue.id, {
         comments: [
           ...(selectedIssue.comments || []),
-          newCommentObj as any
+          newCommentObj
         ]
       });
       

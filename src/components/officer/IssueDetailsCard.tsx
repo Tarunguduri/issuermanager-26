@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Issue } from '@/utils/issues-service';
 import GlassmorphicCard from '../ui/GlassmorphicCard';
@@ -120,6 +119,27 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onSuccess })
                     <img
                       src={image}
                       alt={`Issue ${index}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Fallback to using beforeImages if images isn't available */}
+          {!issue.images && issue.beforeImages && issue.beforeImages.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Before Images</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {issue.beforeImages.map((image, index) => (
+                  <div 
+                    key={index}
+                    className="aspect-square rounded-md overflow-hidden border border-border"
+                  >
+                    <img
+                      src={image}
+                      alt={`Issue Before ${index}`}
                       className="w-full h-full object-cover"
                     />
                   </div>

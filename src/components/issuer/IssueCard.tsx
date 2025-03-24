@@ -59,7 +59,12 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onUpdate }) => {
         issueId: issue.id,
         content: newComment,
         authorId: user.id,
-        authorRole: user.role as 'issuer' | 'officer'
+        authorRole: user.role as 'issuer' | 'officer',
+        authorName: user.name,
+        // Add empty author object to satisfy type requirements
+        author: {
+          name: user.name
+        }
       });
       
       setNewComment('');
