@@ -30,7 +30,8 @@ interface AuthContextType {
   setUserRole: (role: UserRole) => void;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+// Create the context with a default value
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserData | null>(null);
@@ -163,6 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
+// Export the hook directly from the context file
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
