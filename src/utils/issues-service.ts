@@ -1,3 +1,16 @@
+
+import { supabase } from '@/integrations/supabase/client';
+
+// Re-export types and functions from supabase-service
+export type { Issue, IssueImage, AIVerification, IssueComment } from '@/services/supabase-service';
+export { 
+  createIssue, 
+  updateIssue, 
+  getIssueById, 
+  getUserIssues as getIssuesByIssuer,
+  addIssueComment as addComment
+} from '@/services/supabase-service';
+
 export const categories = [
   'Water Supply',
   'Electricity',
@@ -46,31 +59,4 @@ export const verifyImageWithAI = async (imageUrl: string, category: string) => {
       message: `Image does not seem to match the category: ${category}`
     };
   }
-};
-
-// Mock function to create an issue
-export const createIssue = async (issueData: any) => {
-  // In a real application, this would call an API
-  console.log('Creating issue:', issueData);
-  
-  // Clean up data to match the Issue interface
-  const cleanedData = {
-    ...issueData,
-    id: crypto.randomUUID(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-  
-  // Remove any fields that aren't in the Issue interface
-  const { beforeImages, afterImages, ai_verification_status, issuerName, issuerId, ...validIssueData } = cleanedData;
-  
-  // Simulate API latency
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Store in localStorage for demo purposes
-  const existingIssues = JSON.parse(localStorage.getItem('issues') || '[]');
-  existingIssues.push(validIssueData);
-  localStorage.setItem('issues', JSON.stringify(existingIssues));
-  
-  return validIssueData;
 };

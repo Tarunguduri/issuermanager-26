@@ -5,12 +5,11 @@ import { useProtectedRoute } from '@/hooks/useAuth';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import PageTransition from '@/components/layout/PageTransition';
-import { getIssueById } from '@/utils/issues-service';
+import { getIssueById, Issue } from '@/utils/issues-service';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import IssueDetailsCard from '@/components/officer/IssueDetailsCard';
 import { useToast } from '@/hooks/use-toast';
-import { Issue } from '@/utils/issues-service';
 
 const IssueDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,17 +24,8 @@ const IssueDetails = () => {
       if (!id) return;
       
       try {
-        const issueData = getIssueById(id);
-        if (!issueData) {
-          toast({
-            title: "Error",
-            description: "Issue not found",
-            variant: "destructive"
-          });
-          navigate(user?.role === 'issuer' ? '/issuer' : '/officer');
-          return;
-        }
-        
+        setLoading(true);
+        const issueData = await getIssueById(id);
         setIssue(issueData);
       } catch (error) {
         console.error("Failed to fetch issue:", error);
@@ -44,6 +34,7 @@ const IssueDetails = () => {
           description: "Failed to load issue details",
           variant: "destructive"
         });
+        navigate(user?.role === 'issuer' ? '/issuer' : '/officer');
       } finally {
         setLoading(false);
       }
@@ -55,10 +46,7 @@ const IssueDetails = () => {
   const handleSuccess = () => {
     // Refresh issue data
     if (id) {
-      const updatedIssue = getIssueById(id);
-      if (updatedIssue) {
-        setIssue(updatedIssue);
-      }
+      fetchIssue();
     }
   };
 
@@ -66,6 +54,17 @@ const IssueDetails = () => {
   useEffect(() => {
     document.title = issue ? `${issue.title} | JAGRUTHI` : 'Issue Details | JAGRUTHI';
   }, [issue]);
+
+  // Helper function to fetch issue
+  const fetchIssue = async () => {
+    if (!id) return;
+    try {
+      const issueData = await getIssueById(id);
+      setIssue(issueData);
+    } catch (error) {
+      console.error("Failed to refresh issue:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
