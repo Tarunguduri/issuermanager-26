@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Issue, addComment, IssueComment } from '@/utils/issues-service';
 import { formatDistanceToNow } from 'date-fns';
@@ -61,7 +60,6 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onUpdate }) => {
         authorId: user.id,
         authorRole: user.role as 'issuer' | 'officer',
         authorName: user.name,
-        // Add empty author object to satisfy type requirements
         author: {
           name: user.name
         }

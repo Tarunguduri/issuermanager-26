@@ -80,7 +80,7 @@ export interface IssueComment {
   authorId: string;
   authorRole: 'issuer' | 'officer';
   authorName?: string;
-  author?: {
+  author: {
     name: string;
   };
 }
@@ -153,7 +153,7 @@ const mapDbCommentToFrontend = (comment: DbIssueComment): IssueComment => ({
   authorId: comment.author_id,
   authorRole: comment.author_role as 'issuer' | 'officer',
   authorName: comment.author?.name,
-  author: comment.author
+  author: comment.author || { name: '' } // Ensure author is always present
 });
 
 const mapFrontendCommentToDb = (comment: Partial<IssueComment>): Partial<DbIssueComment> => {
@@ -187,29 +187,29 @@ const mapFrontendCommentToDb = (comment: Partial<IssueComment>): Partial<DbIssue
 export const createIssue = async (issueData: Omit<Issue, 'id' | 'createdAt' | 'updatedAt'>) => {
   const dbIssue = mapFrontendIssueToDb(issueData);
   const result = await createDbIssue(dbIssue as any);
-  return mapDbIssueToFrontend(result);
+  return mapDbIssueToFrontend(result as unknown as DbIssue);
 };
 
 export const updateIssue = async (issueId: string, updateData: Partial<Issue>) => {
   const dbUpdateData = mapFrontendIssueToDb(updateData);
   const result = await updateDbIssue(issueId, dbUpdateData as any);
-  return mapDbIssueToFrontend(result);
+  return mapDbIssueToFrontend(result as unknown as DbIssue);
 };
 
 export const getIssueById = async (issueId: string) => {
   const result = await getDbIssueById(issueId);
-  return mapDbIssueToFrontend(result);
+  return mapDbIssueToFrontend(result as unknown as DbIssue);
 };
 
 export const getIssuesByIssuer = async (userId: string) => {
   const results = await getDbUserIssues(userId);
-  return results.map(mapDbIssueToFrontend);
+  return results.map(result => mapDbIssueToFrontend(result as unknown as DbIssue));
 };
 
-export const addComment = async (commentData: Omit<IssueComment, 'id' | 'createdAt' | 'author'>) => {
+export const addComment = async (commentData: Omit<IssueComment, 'id' | 'createdAt'>) => {
   const dbComment = mapFrontendCommentToDb(commentData);
   const result = await addDbIssueComment(dbComment as any);
-  return mapDbCommentToFrontend(result);
+  return mapDbCommentToFrontend(result as unknown as DbIssueComment);
 };
 
 export const categories = [

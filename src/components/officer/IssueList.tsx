@@ -7,43 +7,57 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  AlertCircle, 
-  Clock, 
-  MapPin, 
-  MoreHorizontal, 
-  Filter, 
-  Search, 
-  CheckCircle, 
-  XCircle, 
-  PlayCircle, 
-  MessageSquare 
-} from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import GlassmorphicCard from '../ui/GlassmorphicCard';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer"
+import { Loader2, MessageSquare, Clock, MapPin, AlertCircle, Send, CheckCircle, XCircle } from 'lucide-react';
 
 interface IssueListProps {
   issues: Issue[];
   onUpdate: () => void;
-  isLoading?: boolean; // Added isLoading prop
 }
 
 const getStatusColor = (status: string) => {
@@ -74,29 +88,31 @@ const getPriorityColor = (priority: string) => {
   }
 };
 
-const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate, isLoading = false }) => {
+const IssueList: React.FC<IssueListProps> = ({ 
+  issues,
+  onUpdate
+}) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [selectedTab, setSelectedTab] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
-  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newStatus, setNewStatus] = useState<Issue['status']>('pending');
   const [newComment, setNewComment] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Sorting and filtering
-  const [sortBy, setSortBy] = useState<'date' | 'priority'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [filterCategory, setFilterCategory] = useState<string | null>(null);
-
-  const handleUpdateStatus = async (issueId: string, newStatus: Issue['status']) => {
+  const handleStatusChange = (issue: Issue) => {
+    setSelectedIssue(issue);
+    setIsDialogOpen(true);
+    setNewStatus(issue.status);
+  };
+  
+  const confirmStatusChange = async () => {
+    if (!selectedIssue) return;
+    
+    setIsSubmitting(true);
+    
     try {
-      await updateIssue(issueId, { 
-        status: newStatus,
-        ...(newStatus === 'in-progress' && !issues.find(i => i.id === issueId)?.assignedTo ? {
-          assignedTo: user?.id,
-          assignedOfficerName: user?.name
-        } : {})
-      });
+      await updateIssue(selectedIssue.id, { status: newStatus });
       toast({ title: 'Status updated successfully' });
       onUpdate();
     } catch (error) {
@@ -106,11 +122,16 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate, isLoading = fal
         description: 'Failed to update status',
         variant: 'destructive'
       });
+    } finally {
+      setIsDialogOpen(false);
+      setIsSubmitting(false);
     }
   };
-
-  const handleAddComment = async () => {
-    if (!selectedIssue || !user || !newComment.trim()) return;
+  
+  const addComment = async () => {
+    if (!newComment.trim() || !selectedIssue || !user) return;
+    
+    setIsSubmitting(true);
     
     try {
       // Create a new comment object with proper structure
@@ -118,15 +139,16 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate, isLoading = fal
         id: crypto.randomUUID(),
         issueId: selectedIssue.id,
         content: newComment,
-        createdAt: new Date().toISOString(),
         authorId: user.id,
         authorRole: user.role as 'issuer' | 'officer',
         authorName: user.name,
+        createdAt: new Date().toISOString(),
         author: {
           name: user.name
         }
       };
       
+      // Update the issue with the new comment
       await updateIssue(selectedIssue.id, {
         comments: [
           ...(selectedIssue.comments || []),
@@ -135,7 +157,6 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate, isLoading = fal
       });
       
       setNewComment('');
-      setCommentDialogOpen(false);
       toast({ title: 'Comment added successfully' });
       onUpdate();
     } catch (error) {
@@ -145,318 +166,183 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate, isLoading = fal
         description: 'Failed to add comment',
         variant: 'destructive'
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
-  const filteredIssues = issues.filter(issue => {
-    // Filter by tab (status)
-    if (selectedTab !== 'all' && issue.status !== selectedTab) {
-      return false;
-    }
-    
-    // Filter by search term
-    if (searchTerm && !issue.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !issue.description.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        !issue.location.toLowerCase().includes(searchTerm.toLowerCase())) {
-      return false;
-    }
-    
-    // Filter by category
-    if (filterCategory && issue.category !== filterCategory) {
-      return false;
-    }
-    
-    return true;
-  });
-
-  // Get unique categories from issues
-  const categories = [...new Set(issues.map(issue => issue.category))];
-
-  // Sort issues
-  const sortedIssues = [...filteredIssues].sort((a, b) => {
-    if (sortBy === 'date') {
-      return sortOrder === 'desc' 
-        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    } else {
-      // Priority: high > medium > low
-      const priorityValues = { high: 3, medium: 2, low: 1 };
-      return sortOrder === 'desc'
-        ? priorityValues[b.priority as 'high' | 'medium' | 'low'] - priorityValues[a.priority as 'high' | 'medium' | 'low']
-        : priorityValues[a.priority as 'high' | 'medium' | 'low'] - priorityValues[b.priority as 'high' | 'medium' | 'low'];
-    }
-  });
-
+  
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-        <div className="relative w-full md:w-64">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search issues..."
-            className="pl-9"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        
-        <div className="flex flex-wrap gap-2 w-full md:w-auto">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                Filter
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuLabel>Categories</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setFilterCategory(null)}>
-                All Categories
-              </DropdownMenuItem>
-              {categories.map(category => (
-                <DropdownMenuItem 
-                  key={category}
-                  onClick={() => setFilterCategory(category)}
-                >
-                  {category}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                Sort: {sortBy === 'date' ? 'Date' : 'Priority'} ({sortOrder === 'desc' ? 'Newest' : 'Oldest'})
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuLabel>Sort by</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setSortBy('date')}>
-                Date {sortBy === 'date' && '✓'}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortBy('priority')}>
-                Priority {sortBy === 'priority' && '✓'}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setSortOrder('desc')}>
-                Descending {sortOrder === 'desc' && '✓'}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setSortOrder('asc')}>
-                Ascending {sortOrder === 'asc' && '✓'}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-      
-      <Tabs defaultValue="all" value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="all">All Issues</TabsTrigger>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="in-progress">In Progress</TabsTrigger>
-          <TabsTrigger value="resolved">Resolved</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value={selectedTab} className="mt-0">
-          {sortedIssues.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4">
-              {sortedIssues.map(issue => (
-                <GlassmorphicCard key={issue.id} className="transition-all duration-300 hover:shadow-md">
-                  <CardHeader className="pb-2">
-                    <div className="flex justify-between">
-                      <div>
-                        <CardTitle>{issue.title}</CardTitle>
-                        <CardDescription>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Clock className="h-3 w-3" /> 
-                            <span className="text-xs">
-                              {formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true })}
-                            </span>
-                            
-                            <span>•</span>
-                            
-                            <MapPin className="h-3 w-3" /> 
-                            <span className="text-xs">{issue.location}</span>
-                          </div>
-                        </CardDescription>
-                      </div>
-                      
-                      <div className="flex items-start gap-2">
-                        <div className={`text-xs px-2 py-1 rounded-full ${getStatusColor(issue.status)}`}>
-                          {issue.status === 'in-progress' ? 'In Progress' : 
-                            issue.status.charAt(0).toUpperCase() + issue.status.slice(1)}
-                        </div>
-                        
-                        <div className={`text-xs px-2 py-1 rounded-full ${getPriorityColor(issue.priority)}`}>
-                          {issue.priority.charAt(0).toUpperCase() + issue.priority.slice(1)}
-                        </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="pb-2">
-                    <p className="text-sm line-clamp-2">{issue.description}</p>
-                    
-                    <div className="flex items-center gap-4 mt-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Reported by:</span> {issue.issuerName || issue.user?.name}
-                      </div>
-                      
-                      {(issue.assignedOfficerName || issue.officer?.name) && (
-                        <div>
-                          <span className="text-muted-foreground">Assigned to:</span> {issue.assignedOfficerName || issue.officer?.name}
-                        </div>
-                      )}
-                      
-                      <div>
-                        <span className="text-muted-foreground">Category:</span> {issue.category}
-                      </div>
-                    </div>
-                  </CardContent>
-                  
-                  <CardFooter className="flex justify-between pt-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setSelectedIssue(issue);
-                        setCommentDialogOpen(true);
-                      }}
-                    >
+    <div>
+      <Table>
+        <TableCaption>A list of your recent issues.</TableCaption>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[200px]">Title</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead>Location</TableHead>
+            <TableHead>Priority</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {issues.map((issue) => (
+            <TableRow key={issue.id}>
+              <TableCell className="font-medium">{issue.title}</TableCell>
+              <TableCell>{issue.category}</TableCell>
+              <TableCell>{issue.location}</TableCell>
+              <TableCell>
+                <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${getPriorityColor(issue.priority)}`}>
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  {issue.priority.charAt(0).toUpperCase() + issue.priority.slice(1)}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className={`text-xs px-2 py-1 rounded-full ${getStatusColor(issue.status)}`}>
+                  {issue.status === 'in-progress' ? 'In Progress' : 
+                    issue.status.charAt(0).toUpperCase() + issue.status.slice(1)}
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                <Drawer>
+                  <DrawerTrigger asChild>
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedIssue(issue)}>
                       <MessageSquare className="h-4 w-4 mr-2" />
-                      {issue.comments?.length || 0} Comments
+                      View Details
                     </Button>
-                    
-                    <div className="flex gap-2">
-                      {issue.status === 'pending' && (
-                        <Button 
-                          size="sm" 
-                          onClick={() => handleUpdateStatus(issue.id, 'in-progress')}
-                          className="bg-blue-600 hover:bg-blue-700"
-                        >
-                          <PlayCircle className="h-4 w-4 mr-2" />
-                          Start Progress
-                        </Button>
-                      )}
-                      
-                      {issue.status === 'in-progress' && (
-                        <Button 
-                          size="sm" 
-                          onClick={() => handleUpdateStatus(issue.id, 'resolved')}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Mark Resolved
-                        </Button>
-                      )}
-                      
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
+                  </DrawerTrigger>
+                  <DrawerContent>
+                    <DrawerHeader>
+                      <DrawerTitle>{selectedIssue?.title}</DrawerTitle>
+                      <DrawerDescription>
+                        {selectedIssue?.description}
+                      </DrawerDescription>
+                    </DrawerHeader>
+                    <div className="p-4">
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="text-sm font-medium">Issue Details</h3>
+                          <p className="text-muted-foreground text-xs">
+                            Created {selectedIssue && formatDistanceToNow(new Date(selectedIssue.createdAt), { addSuffix: true })}
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            Category: {selectedIssue?.category}
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            Location: {selectedIssue?.location}
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            Priority: {selectedIssue?.priority}
+                          </p>
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium">Update Status</h3>
+                          <Select 
+                            value={newStatus} 
+                            onValueChange={(value) => setNewStatus(value as Issue['status'])}
+                          >
+                            <SelectTrigger className="w-[180px]">
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="in-progress">In Progress</SelectItem>
+                              <SelectItem value="resolved">Resolved</SelectItem>
+                              <SelectItem value="rejected">Rejected</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="mt-2"
+                            onClick={() => selectedIssue && handleStatusChange(selectedIssue)}
+                          >
+                            Update Status
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          
-                          {issue.status !== 'pending' && (
-                            <DropdownMenuItem onClick={() => handleUpdateStatus(issue.id, 'pending')}>
-                              Set as Pending
-                            </DropdownMenuItem>
-                          )}
-                          
-                          {issue.status !== 'in-progress' && (
-                            <DropdownMenuItem onClick={() => handleUpdateStatus(issue.id, 'in-progress')}>
-                              Set as In Progress
-                            </DropdownMenuItem>
-                          )}
-                          
-                          {issue.status !== 'resolved' && (
-                            <DropdownMenuItem onClick={() => handleUpdateStatus(issue.id, 'resolved')}>
-                              Set as Resolved
-                            </DropdownMenuItem>
-                          )}
-                          
-                          {issue.status !== 'rejected' && (
-                            <DropdownMenuItem onClick={() => handleUpdateStatus(issue.id, 'rejected')}>
-                              Reject Issue
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium">Add Comment</h3>
+                          <Textarea 
+                            value={newComment} 
+                            onChange={(e) => setNewComment(e.target.value)} 
+                            placeholder="Enter your comment here..." 
+                            className="text-sm"
+                          />
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="mt-2"
+                            disabled={isSubmitting}
+                            onClick={addComment}
+                          >
+                            {isSubmitting ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Adding...
+                              </>
+                            ) : (
+                              <>
+                                <Send className="h-4 w-4 mr-2" />
+                                Add Comment
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-medium">Comments</h3>
+                          {selectedIssue?.comments?.map((comment, index) => (
+                            <div key={index} className="p-4 border rounded-lg mb-2 bg-secondary/30">
+                              <div className="flex justify-between items-start">
+                                <p className="font-medium">
+                                  {comment.author?.name || comment.authorName}
+                                  <span className="text-muted-foreground ml-2 text-xs">
+                                    ({comment.authorRole === 'issuer' ? 'Citizen' : 'Officer'})
+                                  </span>
+                                </p>
+                                <span className="text-xs text-muted-foreground">
+                                  {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                                </span>
+                              </div>
+                              <p className="mt-2">{comment.content}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  </CardFooter>
-                </GlassmorphicCard>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No issues found matching your criteria.</p>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+                    <DrawerFooter>
+                      <DrawerClose>Cancel</DrawerClose>
+                    </DrawerFooter>
+                  </DrawerContent>
+                </Drawer>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
       
-      {/* Comment Dialog */}
-      <Dialog open={commentDialogOpen} onOpenChange={setCommentDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{selectedIssue?.title}</DialogTitle>
-            <DialogDescription>
-              Add a comment to this issue
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 my-4">
-            <div className="max-h-48 overflow-y-auto space-y-3">
-              {selectedIssue?.comments && selectedIssue.comments.length > 0 ? (
-                selectedIssue.comments.map(comment => (
-                  <div key={comment.id} className="bg-secondary/50 p-3 rounded-md text-sm">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="font-medium">
-                        {comment.author?.name || comment.authorName} 
-                        <span className="text-muted-foreground ml-1">
-                          ({comment.authorRole === 'officer' ? 'Officer' : 'Issuer'})
-                        </span>
-                      </span>
-                      <span className="text-muted-foreground">
-                        {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
-                      </span>
-                    </div>
-                    <p>{comment.content}</p>
-                  </div>
-                ))
+      <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change Status</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to change the status of this issue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction disabled={isSubmitting} onClick={confirmStatusChange}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
               ) : (
-                <p className="text-center text-sm text-muted-foreground">No comments yet.</p>
+                'Confirm'
               )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="comment">Your comment</Label>
-              <Textarea
-                id="comment"
-                placeholder="Add your comment here..."
-                className="min-h-[100px]"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCommentDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleAddComment} disabled={!newComment.trim()}>
-              Add Comment
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
