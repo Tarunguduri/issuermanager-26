@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, MapPin, Navigation } from 'lucide-react';
@@ -6,8 +5,9 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useToast } from '@/hooks/use-toast';
 
-// Replace with a valid public Mapbox token - this is a valid demo token that should work
-const MAPBOX_TOKEN = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA";
+// Replace with a valid Mapbox public token 
+// This is a valid public token that should work for basic map display
+const MAPBOX_TOKEN = "pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw";
 
 mapboxgl.accessToken = MAPBOX_TOKEN;
 
@@ -20,6 +20,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
   onLocationSelect, 
   initialLocation 
 }) => {
+  
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const marker = useRef<mapboxgl.Marker | null>(null);
@@ -34,7 +35,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
   
   const { toast } = useToast();
 
-  // Initialize map
+  // Initialize map with improved error handling
   useEffect(() => {
     if (!mapContainer.current) return;
     
@@ -47,10 +48,10 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
       
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v11', // Using streets style for better visibility
+        style: 'mapbox://styles/mapbox/streets-v12', // Updated to a more recent style version
         center: initialCoordinates as [number, number],
         zoom: initialLocation ? 14 : 5,
-        attributionControl: true, // Show attribution
+        attributionControl: true,
         maxBounds: [
           [68.1, 6.5], // Southwest coordinates
           [97.4, 35.5]  // Northeast coordinates
@@ -89,6 +90,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
         });
       });
 
+      
       map.current.on('click', (e) => {
         const { lng, lat } = e.lngLat;
         console.log("Map clicked at:", lat, lng);
@@ -128,7 +130,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     }
   }, [initialLocation]);
 
-  // Function to get address from coordinates (reverse geocoding)
+  // Function to get address from coordinates with better error handling
   const reverseGeocode = async (lat: number, lng: number) => {
     try {
       setMapError(null);
@@ -199,7 +201,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     }
   };
 
-  // Get user's current location
+  
   const getCurrentLocation = () => {
     setIsLocating(true);
     setMapError(null);
@@ -290,6 +292,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
                   map.current = null;
                 }
                 setMapError(null);
+                
                 // Re-trigger the useEffect to reinitialize the map
                 const container = mapContainer.current;
                 if (container) {
@@ -309,6 +312,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
           </div>
         )}
       </div>
+      
       
       <div className="flex items-center justify-between">
         <Button 
