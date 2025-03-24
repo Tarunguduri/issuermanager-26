@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Issue, IssueComment, addComment, updateIssueStatus } from '@/utils/issues-service';
 import { formatDistanceToNow } from 'date-fns';
@@ -52,7 +53,7 @@ const IssueCard: React.FC<{ issue: Issue; onUpdate: () => void }> = ({ issue, on
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState(issue.status);
+  const [selectedStatus, setSelectedStatus] = useState<Issue['status']>(issue.status);
   
   const handleAddComment = async () => {
     if (!user || !newComment.trim()) return;
@@ -75,7 +76,7 @@ const IssueCard: React.FC<{ issue: Issue; onUpdate: () => void }> = ({ issue, on
       toast({ title: 'Comment added successfully' });
       
       // Invalidate the query for the issue list to trigger a refetch
-      queryClient.invalidateQueries(['issues']);
+      queryClient.invalidateQueries({queryKey: ['issues']});
       
       if (onUpdate) {
         onUpdate();
@@ -96,11 +97,11 @@ const IssueCard: React.FC<{ issue: Issue; onUpdate: () => void }> = ({ issue, on
     setIsUpdatingStatus(true);
     try {
       await updateIssueStatus(issue.id, status);
-      setSelectedStatus(status);
+      setSelectedStatus(status as Issue['status']);
       toast({ title: 'Status updated successfully' });
       
       // Invalidate the query for the issue list to trigger a refetch
-      queryClient.invalidateQueries(['issues']);
+      queryClient.invalidateQueries({queryKey: ['issues']});
       
       if (onUpdate) {
         onUpdate();

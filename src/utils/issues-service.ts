@@ -196,6 +196,16 @@ export const updateIssue = async (issueId: string, updateData: Partial<Issue>) =
   return mapDbIssueToFrontend(result as unknown as DbIssue);
 };
 
+// Add the missing updateIssueStatus function
+export const updateIssueStatus = async (issueId: string, status: string) => {
+  // Validate that status is one of the accepted values
+  const validStatus = ['pending', 'in-progress', 'resolved', 'rejected'];
+  const statusToUse = validStatus.includes(status) ? status : 'pending';
+  
+  const result = await updateDbIssue(issueId, { status: statusToUse });
+  return mapDbIssueToFrontend(result as unknown as DbIssue);
+};
+
 export const getIssueById = async (issueId: string) => {
   const result = await getDbIssueById(issueId);
   return mapDbIssueToFrontend(result as unknown as DbIssue);
