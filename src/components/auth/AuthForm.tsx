@@ -72,6 +72,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ initialMode = 'login', role }) => {
           return;
         }
 
+        // Generate a unique phone identifier if not provided
+        // This prevents database constraint errors when the same phone number is used
+        const phoneValue = formData.phone ? formData.phone : `auto-${Date.now()}`;
+
         // Additional validation for officer registration
         if (role === 'officer') {
           if (!formData.category || !formData.designation || !formData.zone) {
@@ -94,7 +98,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ initialMode = 'login', role }) => {
           role === 'officer' ? formData.category : undefined,
           role === 'officer' ? formData.designation : undefined,
           role === 'officer' ? formData.zone : undefined,
-          formData.phone || undefined,
+          phoneValue,
           formData.location || undefined
         );
         toast({ title: "Success", description: "Account created successfully" });
@@ -197,6 +201,19 @@ const AuthForm: React.FC<AuthFormProps> = ({ initialMode = 'login', role }) => {
                   placeholder="••••••••"
                   className="glass-input"
                   required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number (Optional)</Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="Your phone number"
+                  className="glass-input"
                 />
               </div>
 

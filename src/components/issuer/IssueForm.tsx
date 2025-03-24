@@ -251,9 +251,7 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSuccess }) => {
         },
         priority: formData.priority,
         status: 'pending',
-        issuerId: user.id,
-        issuerName: user.name,
-        images: imageNames,
+        user_id: user.id,
         beforeImages: imageNames,
         ai_verification_status: 'verified'
       });

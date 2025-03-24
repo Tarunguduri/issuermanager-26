@@ -95,6 +95,10 @@ export interface Issue {
   category: string;
   description: string;
   location: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
   zone?: string;
   priority: string;
   status: 'pending' | 'in-progress' | 'resolved';
