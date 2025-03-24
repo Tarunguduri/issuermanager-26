@@ -15,35 +15,69 @@ import {
 } from '@/services/supabase-service';
 
 // Create camelCase versions of the types for frontend use
-export interface Issue extends Omit<DbIssue, 'created_at' | 'updated_at' | 'user_id' | 'assigned_to'> {
+export interface Issue {
+  id: string;
+  title: string;
+  category: string;
+  description: string;
+  location: string;
+  priority: 'low' | 'medium' | 'high';
+  status: 'pending' | 'in-progress' | 'resolved' | 'rejected';
+  zone?: string;
   createdAt: string;
   updatedAt: string;
   userId: string;
   assignedTo?: string;
+  // Added fields for UI convenience
   assignedOfficerName?: string;
   issuerName?: string;
   beforeImages?: string[];
   afterImages?: string[];
   ai_verification_status?: string;
+  comments?: IssueComment[];
+  officer?: {
+    name: string;
+    email?: string;
+    phone?: string;
+    designation?: string;
+  };
+  user?: {
+    name: string;
+    email?: string;
+    phone?: string;
+    location?: string;
+  };
 }
 
-export interface IssueImage extends Omit<DbIssueImage, 'issue_id' | 'uploaded_at' | 'uploaded_by'> {
+export interface IssueImage {
+  id: string;
   issueId: string;
+  image_url: string;
+  image_type: 'before' | 'after';
   uploadedAt: string;
   uploadedBy: string;
 }
 
-export interface AIVerification extends Omit<DbAIVerification, 'issue_id' | 'verified_at'> {
+export interface AIVerification {
+  id: string;
   issueId: string;
+  is_valid: boolean;
+  processing_steps: any;
+  verification_type: 'issue' | 'resolution';
   verifiedAt: string;
 }
 
-export interface IssueComment extends Omit<DbIssueComment, 'issue_id' | 'created_at' | 'author_id' | 'author_role'> {
+export interface IssueComment {
+  id: string;
   issueId: string;
+  content: string;
   createdAt: string;
   authorId: string;
   authorRole: 'issuer' | 'officer';
   authorName?: string;
+  author?: {
+    name: string;
+  };
 }
 
 // Mapping functions to convert between DB and frontend formats
@@ -53,7 +87,7 @@ const mapDbIssueToFrontend = (dbIssue: DbIssue): Issue => ({
   category: dbIssue.category,
   description: dbIssue.description,
   location: dbIssue.location,
-  priority: dbIssue.priority,
+  priority: dbIssue.priority as 'low' | 'medium' | 'high',
   status: dbIssue.status as 'pending' | 'in-progress' | 'resolved' | 'rejected',
   zone: dbIssue.zone,
   createdAt: dbIssue.created_at,
@@ -63,6 +97,9 @@ const mapDbIssueToFrontend = (dbIssue: DbIssue): Issue => ({
   // Map user and officer fields
   issuerName: dbIssue.user?.name,
   assignedOfficerName: dbIssue.officer?.name,
+  officer: dbIssue.officer,
+  user: dbIssue.user,
+  comments: dbIssue.comments?.map(mapDbCommentToFrontend)
 });
 
 const mapFrontendIssueToDb = (issue: Partial<Issue>): Partial<DbIssue> => {
@@ -106,6 +143,7 @@ const mapDbCommentToFrontend = (comment: DbIssueComment): IssueComment => ({
   authorId: comment.author_id,
   authorRole: comment.author_role as 'issuer' | 'officer',
   authorName: comment.author?.name,
+  author: comment.author
 });
 
 const mapFrontendCommentToDb = (comment: Partial<IssueComment>): Partial<DbIssueComment> => {
@@ -144,7 +182,7 @@ export const createIssue = async (issueData: Omit<Issue, 'id' | 'createdAt' | 'u
 
 export const updateIssue = async (issueId: string, updateData: Partial<Issue>) => {
   const dbUpdateData = mapFrontendIssueToDb(updateData);
-  const result = await updateDbIssue(issueId, dbUpdateData);
+  const result = await updateDbIssue(issueId, dbUpdateData as any);
   return mapDbIssueToFrontend(result);
 };
 
@@ -158,7 +196,7 @@ export const getIssuesByIssuer = async (userId: string) => {
   return results.map(mapDbIssueToFrontend);
 };
 
-export const addComment = async (commentData: Omit<IssueComment, 'id' | 'createdAt'>) => {
+export const addComment = async (commentData: Omit<IssueComment, 'id' | 'createdAt' | 'author'>) => {
   const dbComment = mapFrontendCommentToDb(commentData);
   const result = await addDbIssueComment(dbComment as any);
   return mapDbCommentToFrontend(result);

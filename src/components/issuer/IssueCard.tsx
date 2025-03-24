@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Issue, addComment } from '@/utils/issues-service';
+import { Issue, addComment, IssueComment } from '@/utils/issues-service';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -81,7 +81,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onUpdate }) => {
   };
 
   // Handle field name differences between the mock data and actual API data
-  const officerName = issue.officer?.name;
+  const officerName = issue.officer?.name || issue.assignedOfficerName;
   const createdDate = new Date(issue.createdAt);
 
   return (
@@ -145,13 +145,13 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onUpdate }) => {
                   <div key={comment.id} className="bg-secondary/50 p-3 rounded-md text-sm">
                     <div className="flex justify-between text-xs mb-1">
                       <span className="font-medium">
-                        {comment.author.name} 
+                        {comment.author?.name || comment.authorName} 
                         <span className="text-muted-foreground ml-1">
-                          ({comment.author_role === 'issuer' ? 'You' : 'Officer'})
+                          ({comment.authorRole === 'issuer' ? 'You' : 'Officer'})
                         </span>
                       </span>
                       <span className="text-muted-foreground">
-                        {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                        {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                       </span>
                     </div>
                     <p>{comment.content}</p>

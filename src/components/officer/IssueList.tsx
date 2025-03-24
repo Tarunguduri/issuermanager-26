@@ -114,6 +114,7 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate, isLoading = fal
     if (!selectedIssue || !user || !newComment.trim()) return;
     
     try {
+      // Create a new comment object with proper structure
       const newCommentObj: Partial<IssueComment> = {
         id: crypto.randomUUID(),
         issueId: selectedIssue.id,
@@ -121,7 +122,10 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate, isLoading = fal
         createdAt: new Date().toISOString(),
         authorId: user.id,
         authorRole: user.role as 'issuer' | 'officer',
-        authorName: user.name
+        authorName: user.name,
+        author: {
+          name: user.name
+        }
       };
       
       await updateIssue(selectedIssue.id, {
@@ -299,12 +303,12 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate, isLoading = fal
                     
                     <div className="flex items-center gap-4 mt-4 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Reported by:</span> {issue.issuerName}
+                        <span className="text-muted-foreground">Reported by:</span> {issue.issuerName || issue.user?.name}
                       </div>
                       
-                      {issue.assignedOfficerName && (
+                      {(issue.assignedOfficerName || issue.officer?.name) && (
                         <div>
-                          <span className="text-muted-foreground">Assigned to:</span> {issue.assignedOfficerName}
+                          <span className="text-muted-foreground">Assigned to:</span> {issue.assignedOfficerName || issue.officer?.name}
                         </div>
                       )}
                       
@@ -417,11 +421,11 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate, isLoading = fal
                       <span className="font-medium">
                         {comment.author?.name || comment.authorName} 
                         <span className="text-muted-foreground ml-1">
-                          ({comment.author_role || comment.authorRole === 'officer' ? 'Officer' : 'Issuer'})
+                          ({comment.authorRole === 'officer' ? 'Officer' : 'Issuer'})
                         </span>
                       </span>
                       <span className="text-muted-foreground">
-                        {formatDistanceToNow(new Date(comment.created_at || comment.createdAt), { addSuffix: true })}
+                        {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
                       </span>
                     </div>
                     <p>{comment.content}</p>

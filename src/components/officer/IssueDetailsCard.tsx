@@ -28,7 +28,7 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onSuccess })
   };
 
   // Determine the correct username from issue data
-  const issuerName = issue.user?.name || "Unknown User";
+  const issuerName = issue.user?.name || issue.issuerName || "Unknown User";
 
   return (
     <div className="space-y-6">
@@ -138,9 +138,9 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onSuccess })
                     className="p-4 rounded-lg bg-secondary/20 border border-border"
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <div className="font-medium">{comment.author.name}</div>
+                      <div className="font-medium">{comment.author?.name || comment.authorName}</div>
                       <div className="text-xs text-muted-foreground">
-                        {format(new Date(comment.created_at), 'PPp')}
+                        {format(new Date(comment.createdAt), 'PPp')}
                       </div>
                     </div>
                     <p className="text-muted-foreground">{comment.content}</p>
