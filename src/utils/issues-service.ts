@@ -7,9 +7,12 @@ export {
   createIssue, 
   updateIssue, 
   getIssueById, 
-  getUserIssues as getIssuesByIssuer,
-  addIssueComment as addComment
+  getUserIssues as getIssuesByIssuer
 } from '@/services/supabase-service';
+
+// Export addComment by directly importing the function from supabase-service
+import { addIssueComment } from '@/services/supabase-service';
+export const addComment = addIssueComment;
 
 export const categories = [
   'Water Supply',

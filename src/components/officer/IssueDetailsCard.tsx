@@ -27,6 +27,9 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onSuccess })
     'high': 'bg-red-500/10 text-red-500 border-red-500/30',
   };
 
+  // Determine the correct username from issue data
+  const issuerName = issue.user?.name || "Unknown User";
+
   return (
     <div className="space-y-6">
       <GlassmorphicCard className="p-6">
@@ -52,7 +55,7 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onSuccess })
                 <User className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm text-muted-foreground">Reported by</p>
-                  <p className="font-medium">{issue.issuerName}</p>
+                  <p className="font-medium">{issuerName}</p>
                 </div>
               </div>
 
@@ -71,9 +74,9 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onSuccess })
                 <CalendarClock className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm text-muted-foreground">Reported on</p>
-                  <p className="font-medium">{format(new Date(issue.createdAt), 'PPP')}</p>
+                  <p className="font-medium">{format(new Date(issue.created_at), 'PPP')}</p>
                   <p className="text-sm text-muted-foreground">
-                    {format(new Date(issue.createdAt), 'p')}
+                    {format(new Date(issue.created_at), 'p')}
                   </p>
                 </div>
               </div>
@@ -83,7 +86,7 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onSuccess })
                   <AlarmClock className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm text-muted-foreground">In progress since</p>
-                    <p className="font-medium">{format(new Date(issue.updatedAt), 'PPP')}</p>
+                    <p className="font-medium">{format(new Date(issue.updated_at), 'PPP')}</p>
                   </div>
                 </div>
               )}
@@ -93,7 +96,7 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onSuccess })
                   <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm text-muted-foreground">Resolved on</p>
-                    <p className="font-medium">{format(new Date(issue.updatedAt), 'PPP')}</p>
+                    <p className="font-medium">{format(new Date(issue.updated_at), 'PPP')}</p>
                   </div>
                 </div>
               )}
@@ -135,9 +138,9 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onSuccess })
                     className="p-4 rounded-lg bg-secondary/20 border border-border"
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <div className="font-medium">{comment.authorName}</div>
+                      <div className="font-medium">{comment.author.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        {format(new Date(comment.createdAt), 'PPp')}
+                        {format(new Date(comment.created_at), 'PPp')}
                       </div>
                     </div>
                     <p className="text-muted-foreground">{comment.content}</p>

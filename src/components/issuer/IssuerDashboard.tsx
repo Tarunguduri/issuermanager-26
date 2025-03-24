@@ -18,21 +18,24 @@ const IssuerDashboard: React.FC = () => {
   
   useEffect(() => {
     if (user) {
-      const userIssues = getIssuesByIssuer(user.id);
-      setIssues(userIssues);
+      fetchIssues();
     }
   }, [user]);
   
-  const refreshIssues = () => {
+  const fetchIssues = async () => {
     if (user) {
-      const userIssues = getIssuesByIssuer(user.id);
-      setIssues(userIssues);
+      try {
+        const userIssues = await getIssuesByIssuer(user.id);
+        setIssues(userIssues);
+      } catch (error) {
+        console.error("Failed to fetch issues:", error);
+      }
     }
   };
   
   const handleNewIssueSuccess = () => {
     setIsReportingIssue(false);
-    refreshIssues();
+    fetchIssues();
   };
   
   const getFilteredIssues = () => {
@@ -131,7 +134,7 @@ const IssuerDashboard: React.FC = () => {
                 <IssueCard 
                   key={issue.id} 
                   issue={issue} 
-                  onUpdate={refreshIssues}
+                  onUpdate={fetchIssues}
                 />
               ))
             ) : (

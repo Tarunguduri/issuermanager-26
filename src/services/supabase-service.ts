@@ -101,21 +101,24 @@ export interface Issue {
   };
   zone?: string;
   priority: string;
-  status: 'pending' | 'in-progress' | 'resolved';
+  status: 'pending' | 'in-progress' | 'resolved' | 'rejected';
   created_at: string;
   updated_at: string;
   assigned_to?: string;
-  user?: {
-    name: string;
-    email: string;
-    phone: string;
-    location: string;
-  };
+  // Add these fields to match what the components expect
+  comments?: IssueComment[];
+  images?: string[];
   officer?: {
     name: string;
     email: string;
     phone: string;
     designation: string;
+  };
+  user?: {
+    name: string;
+    email: string;
+    phone: string;
+    location: string;
   };
 }
 
@@ -326,7 +329,7 @@ export interface IssueComment {
   created_at: string;
   author_id: string;
   author_role: 'issuer' | 'officer';
-  author?: {
+  author: {
     name: string;
   };
 }

@@ -55,13 +55,12 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onUpdate }) => {
     setIsSubmitting(true);
     
     try {
-      await addComment(
-        issue.id,
-        newComment,
-        user.id,
-        user.name,
-        user.role as 'issuer' | 'officer'
-      );
+      await addComment({
+        issue_id: issue.id,
+        content: newComment,
+        author_id: user.id,
+        author_role: user.role as 'issuer' | 'officer'
+      });
       
       setNewComment('');
       toast({ title: 'Comment added successfully' });
@@ -81,6 +80,10 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onUpdate }) => {
     }
   };
 
+  // Handle field name differences between the mock data and actual API data
+  const officerName = issue.officer?.name;
+  const createdDate = new Date(issue.created_at);
+
   return (
     <GlassmorphicCard className="p-5 h-full flex flex-col">
       <div className="flex-1">
@@ -96,7 +99,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onUpdate }) => {
         <div className="flex items-center text-xs text-muted-foreground mb-3">
           <Clock className="h-3 w-3 mr-1" /> 
           <span>
-            {formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true })}
+            {formatDistanceToNow(createdDate, { addSuffix: true })}
           </span>
           
           <span className="mx-2">•</span>
@@ -116,9 +119,9 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onUpdate }) => {
           {issue.description}
         </p>
         
-        {issue.assignedOfficerName && (
+        {officerName && (
           <div className="text-xs text-muted-foreground mb-3">
-            <span className="font-medium">Assigned to:</span> {issue.assignedOfficerName}
+            <span className="font-medium">Assigned to:</span> {officerName}
           </div>
         )}
       </div>
@@ -142,13 +145,13 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onUpdate }) => {
                   <div key={comment.id} className="bg-secondary/50 p-3 rounded-md text-sm">
                     <div className="flex justify-between text-xs mb-1">
                       <span className="font-medium">
-                        {comment.authorName} 
+                        {comment.author.name} 
                         <span className="text-muted-foreground ml-1">
-                          ({comment.authorRole === 'issuer' ? 'You' : 'Officer'})
+                          ({comment.author_role === 'issuer' ? 'You' : 'Officer'})
                         </span>
                       </span>
                       <span className="text-muted-foreground">
-                        {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                        {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                       </span>
                     </div>
                     <p>{comment.content}</p>
