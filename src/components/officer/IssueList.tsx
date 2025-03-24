@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Issue, updateIssue } from '@/utils/issues-service';
+import { Issue, updateIssue, IssueComment } from '@/utils/issues-service';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
@@ -113,18 +114,20 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate, isLoading = fal
     if (!selectedIssue || !user || !newComment.trim()) return;
     
     try {
+      const newCommentObj: Partial<IssueComment> = {
+        id: crypto.randomUUID(),
+        issueId: selectedIssue.id,
+        content: newComment,
+        createdAt: new Date().toISOString(),
+        authorId: user.id,
+        authorRole: user.role as 'issuer' | 'officer',
+        authorName: user.name
+      };
+      
       await updateIssue(selectedIssue.id, {
         comments: [
           ...(selectedIssue.comments || []),
-          {
-            id: crypto.randomUUID(),
-            issueId: selectedIssue.id,
-            content: newComment,
-            createdAt: new Date().toISOString(),
-            authorId: user.id,
-            authorName: user.name,
-            authorRole: 'officer'
-          }
+          newCommentObj as any
         ]
       });
       
@@ -176,8 +179,8 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate, isLoading = fal
       // Priority: high > medium > low
       const priorityValues = { high: 3, medium: 2, low: 1 };
       return sortOrder === 'desc'
-        ? priorityValues[b.priority] - priorityValues[a.priority]
-        : priorityValues[a.priority] - priorityValues[b.priority];
+        ? priorityValues[b.priority as 'high' | 'medium' | 'low'] - priorityValues[a.priority as 'high' | 'medium' | 'low']
+        : priorityValues[a.priority as 'high' | 'medium' | 'low'] - priorityValues[b.priority as 'high' | 'medium' | 'low'];
     }
   });
 
@@ -412,13 +415,13 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdate, isLoading = fal
                   <div key={comment.id} className="bg-secondary/50 p-3 rounded-md text-sm">
                     <div className="flex justify-between text-xs mb-1">
                       <span className="font-medium">
-                        {comment.authorName} 
+                        {comment.author?.name || comment.authorName} 
                         <span className="text-muted-foreground ml-1">
-                          ({comment.authorRole === 'officer' ? 'Officer' : 'Issuer'})
+                          ({comment.author_role || comment.authorRole === 'officer' ? 'Officer' : 'Issuer'})
                         </span>
                       </span>
                       <span className="text-muted-foreground">
-                        {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                        {formatDistanceToNow(new Date(comment.created_at || comment.createdAt), { addSuffix: true })}
                       </span>
                     </div>
                     <p>{comment.content}</p>

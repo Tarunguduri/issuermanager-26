@@ -42,13 +42,20 @@ export interface IssueComment extends Omit<DbIssueComment, 'issue_id' | 'created
   issueId: string;
   createdAt: string;
   authorId: string;
-  authorRole: string;
+  authorRole: 'issuer' | 'officer';
   authorName?: string;
 }
 
 // Mapping functions to convert between DB and frontend formats
 const mapDbIssueToFrontend = (dbIssue: DbIssue): Issue => ({
-  ...dbIssue,
+  id: dbIssue.id,
+  title: dbIssue.title,
+  category: dbIssue.category,
+  description: dbIssue.description,
+  location: dbIssue.location,
+  priority: dbIssue.priority,
+  status: dbIssue.status as 'pending' | 'in-progress' | 'resolved' | 'rejected',
+  zone: dbIssue.zone,
   createdAt: dbIssue.created_at,
   updatedAt: dbIssue.updated_at || dbIssue.created_at,
   userId: dbIssue.user_id,
@@ -59,72 +66,71 @@ const mapDbIssueToFrontend = (dbIssue: DbIssue): Issue => ({
 });
 
 const mapFrontendIssueToDb = (issue: Partial<Issue>): Partial<DbIssue> => {
-  const dbIssue: Partial<DbIssue> = { ...issue };
+  const dbIssue: Partial<DbIssue> = {};
+  
+  // Copy all properties that don't need mapping
+  if (issue.id !== undefined) dbIssue.id = issue.id;
+  if (issue.title !== undefined) dbIssue.title = issue.title;
+  if (issue.category !== undefined) dbIssue.category = issue.category;
+  if (issue.description !== undefined) dbIssue.description = issue.description;
+  if (issue.location !== undefined) dbIssue.location = issue.location;
+  if (issue.priority !== undefined) dbIssue.priority = issue.priority;
+  if (issue.status !== undefined) dbIssue.status = issue.status;
+  if (issue.zone !== undefined) dbIssue.zone = issue.zone;
   
   // Map camelCase to snake_case
   if (issue.createdAt !== undefined) {
     dbIssue.created_at = issue.createdAt;
-    delete dbIssue.createdAt;
   }
   
   if (issue.updatedAt !== undefined) {
     dbIssue.updated_at = issue.updatedAt;
-    delete dbIssue.updatedAt;
   }
   
   if (issue.userId !== undefined) {
     dbIssue.user_id = issue.userId;
-    delete dbIssue.userId;
   }
   
   if (issue.assignedTo !== undefined) {
     dbIssue.assigned_to = issue.assignedTo;
-    delete dbIssue.assignedTo;
   }
-  
-  // Remove frontend-only fields
-  delete dbIssue.assignedOfficerName;
-  delete dbIssue.issuerName;
-  delete dbIssue.beforeImages;
-  delete dbIssue.afterImages;
   
   return dbIssue;
 };
 
 const mapDbCommentToFrontend = (comment: DbIssueComment): IssueComment => ({
-  ...comment,
+  id: comment.id,
+  content: comment.content,
   issueId: comment.issue_id,
   createdAt: comment.created_at,
   authorId: comment.author_id,
-  authorRole: comment.author_role,
+  authorRole: comment.author_role as 'issuer' | 'officer',
   authorName: comment.author?.name,
 });
 
 const mapFrontendCommentToDb = (comment: Partial<IssueComment>): Partial<DbIssueComment> => {
-  const dbComment: Partial<DbIssueComment> = { ...comment };
+  const dbComment: Partial<DbIssueComment> = {};
   
+  // Copy all properties that don't need mapping
+  if (comment.id !== undefined) dbComment.id = comment.id;
+  if (comment.content !== undefined) dbComment.content = comment.content;
+  
+  // Map camelCase to snake_case
   if (comment.issueId !== undefined) {
     dbComment.issue_id = comment.issueId;
-    delete dbComment.issueId;
   }
   
   if (comment.createdAt !== undefined) {
     dbComment.created_at = comment.createdAt;
-    delete dbComment.createdAt;
   }
   
   if (comment.authorId !== undefined) {
     dbComment.author_id = comment.authorId;
-    delete dbComment.authorId;
   }
   
   if (comment.authorRole !== undefined) {
     dbComment.author_role = comment.authorRole;
-    delete dbComment.authorRole;
   }
-  
-  // Remove frontend-only fields
-  delete dbComment.authorName;
   
   return dbComment;
 };
@@ -132,7 +138,7 @@ const mapFrontendCommentToDb = (comment: Partial<IssueComment>): Partial<DbIssue
 // Wrapped API functions
 export const createIssue = async (issueData: Omit<Issue, 'id' | 'createdAt' | 'updatedAt'>) => {
   const dbIssue = mapFrontendIssueToDb(issueData);
-  const result = await createDbIssue(dbIssue as Omit<DbIssue, 'id' | 'created_at' | 'updated_at'>);
+  const result = await createDbIssue(dbIssue as any);
   return mapDbIssueToFrontend(result);
 };
 
@@ -154,7 +160,7 @@ export const getIssuesByIssuer = async (userId: string) => {
 
 export const addComment = async (commentData: Omit<IssueComment, 'id' | 'createdAt'>) => {
   const dbComment = mapFrontendCommentToDb(commentData);
-  const result = await addDbIssueComment(dbComment as Omit<DbIssueComment, 'id' | 'created_at'>);
+  const result = await addDbIssueComment(dbComment as any);
   return mapDbCommentToFrontend(result);
 };
 

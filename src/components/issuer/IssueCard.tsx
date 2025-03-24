@@ -56,10 +56,10 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onUpdate }) => {
     
     try {
       await addComment({
-        issue_id: issue.id,
+        issueId: issue.id,
         content: newComment,
-        author_id: user.id,
-        author_role: user.role as 'issuer' | 'officer'
+        authorId: user.id,
+        authorRole: user.role as 'issuer' | 'officer'
       });
       
       setNewComment('');
@@ -82,7 +82,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ issue, onUpdate }) => {
 
   // Handle field name differences between the mock data and actual API data
   const officerName = issue.officer?.name;
-  const createdDate = new Date(issue.created_at);
+  const createdDate = new Date(issue.createdAt);
 
   return (
     <GlassmorphicCard className="p-5 h-full flex flex-col">
