@@ -1,97 +1,73 @@
 
-import { useToast } from "@/hooks/use-toast";
-
-// Types for AI verification results
-export interface AIVerificationResult {
-  isResolved: boolean;
-  confidence: number;
-  feedback: string;
-  areas?: {
-    name: string;
-    improvement: number;
-    details: string;
-  }[];
-}
-
-/**
- * Analyzes images to determine if an issue has been resolved
- * This implementation uses a mock AI service - in production this would call an actual AI API
- */
-export const analyzeImagePair = async (
-  beforeImageUrl: string,
-  afterImageUrl: string,
-  category: string
-): Promise<AIVerificationResult> => {
-  console.log("Analyzing images for resolution verification:", { beforeImageUrl, afterImageUrl, category });
+// Simulate AI verification with more deterministic behavior
+export const verifyImageWithAI = async (imageUrl: string, category: string) => {
+  console.log('Verifying image with AI:', imageUrl, category);
   
-  try {
-    // Simulate AI processing time
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // For demonstration, we'll use a weighted random outcome with improved reliability
-    // In production, this would be a real AI model comparing the images
-    const randomFactor = Math.random();
-    const improvementThreshold = 0.6; // Higher threshold for stricter verification
-    const isResolved = randomFactor > (1 - improvementThreshold);
-    
-    // Generate more deterministic confidence score
-    const confidence = isResolved 
-      ? 0.7 + (randomFactor * 0.3) // 70-100% for resolved
-      : 0.2 + (randomFactor * 0.4); // 20-60% for unresolved
-    
-    // Category-specific analysis areas
-    const categoryAreas: Record<string, string[]> = {
-      'Water Supply': ['pipe condition', 'water flow', 'leakage', 'water quality'],
-      'Electricity': ['connection status', 'wiring condition', 'light functionality', 'electrical hazards'],
-      'Roads': ['surface condition', 'pothole repair', 'drainage', 'road markings'],
-      'Garbage Collection': ['waste removal', 'cleanliness', 'disposal area condition', 'container placement'],
-      'Street Lights': ['light functionality', 'pole condition', 'wiring safety', 'illumination quality'],
-    };
-    
-    // Select relevant areas for the category
-    const relevantAreas = categoryAreas[category] || ['general condition', 'issue status', 'area cleanliness'];
-    
-    // Generate more realistic improvement metrics for each area
-    const areas = relevantAreas.map(name => {
-      // Use the same random factor for consistency across areas
-      const baseImprovement = isResolved ? 0.65 : 0.35;
-      const variationFactor = Math.random() * 0.3; // Add some variation but maintain consistency
-      const improvement = isResolved 
-        ? baseImprovement + variationFactor
-        : Math.max(0, baseImprovement - variationFactor);
-      
-      return {
-        name,
-        improvement: parseFloat(improvement.toFixed(2)),
-        details: improvement > improvementThreshold
-          ? `Significant improvement detected in ${name}.` 
-          : `Limited or insufficient improvement in ${name}.`
-      };
-    });
-    
-    // Determine feedback based on result with more specific guidance
-    let feedback = '';
-    if (isResolved) {
-      feedback = `AI verification confirms this ${category} issue has been successfully resolved with ${(confidence * 100).toFixed(1)}% confidence. Improvements detected in ${areas.filter(a => a.improvement > improvementThreshold).length} out of ${areas.length} key areas.`;
-    } else {
-      feedback = `AI verification could not confirm resolution of this ${category} issue (confidence: ${(confidence * 100).toFixed(1)}%). Please ensure all problem areas are properly addressed and upload a clearer image showing the complete resolution.`;
-    }
-    
-    console.log("AI verification result:", { isResolved, confidence, areas });
-    
+  // Simulate delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  // Mock AI verification with less randomness for testing
+  const isMatch = Math.random() > 0.15; // 85% success rate
+  
+  console.log(`AI verification result for ${category}: ${isMatch ? 'Success' : 'Failed'}`);
+  
+  if (isMatch) {
     return {
-      isResolved,
-      confidence,
-      feedback,
-      areas
+      success: true,
+      message: `Image verified successfully for category: ${category}`
     };
-  } catch (error) {
-    console.error("Error in AI verification:", error);
-    // Return a failure result rather than throwing an error
+  } else {
     return {
-      isResolved: false,
-      confidence: 0,
-      feedback: "An error occurred during image verification. Please try again."
+      success: false,
+      message: `Image does not clearly show a ${category} issue. Please upload a clearer image.`
     };
   }
+};
+
+// Compare before and after images for resolution verification
+export const verifyResolution = async (beforeImageUrl: string, afterImageUrl: string, category: string) => {
+  console.log('Verifying resolution with AI:', { beforeImageUrl, afterImageUrl, category });
+  
+  // Simulate delay
+  await new Promise(resolve => setTimeout(resolve, 1200));
+  
+  // Mock AI verification with more deterministic behavior for demo
+  const improvement = Math.random(); // 0-1 value representing improvement
+  const isResolved = improvement > 0.3; // 70% chance of success
+  
+  // Generate areas of improvement for UI display
+  const areas = [
+    {
+      name: 'Cleanliness',
+      improvement: Math.random() * (isResolved ? 0.6 : 0.4) + (isResolved ? 0.4 : 0),
+      details: isResolved 
+        ? 'Significant improvement in cleanliness observed.' 
+        : 'Minor improvement in cleanliness, but not sufficient.'
+    }, 
+    {
+      name: 'Structural Integrity',
+      improvement: Math.random() * (isResolved ? 0.7 : 0.3) + (isResolved ? 0.3 : 0),
+      details: isResolved 
+        ? 'Structure has been properly repaired.' 
+        : 'Some repair work done, but structure still needs attention.'
+    }, 
+    {
+      name: 'Safety Hazards',
+      improvement: Math.random() * (isResolved ? 0.9 : 0.2) + (isResolved ? 0.1 : 0),
+      details: isResolved 
+        ? 'All safety hazards have been addressed.' 
+        : 'Safety issues still present and need immediate attention.'
+    }
+  ];
+  
+  console.log(`Resolution verification result: ${isResolved ? 'Resolved' : 'Not Resolved'}`);
+  
+  return {
+    success: isResolved,
+    message: isResolved 
+      ? `The ${category} issue has been successfully resolved.` 
+      : `The ${category} issue has not been fully resolved. Please address remaining issues.`,
+    areas,
+    overallImprovement: improvement
+  };
 };

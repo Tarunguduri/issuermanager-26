@@ -7,7 +7,7 @@ import {
   getCurrentUser, 
   UserData, 
   UserRole
-} from '@/services/supabase-service';
+} from '@/services/local-storage-service';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -58,8 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
-      await signIn(email, password);
-      const userData = await getCurrentUser();
+      const { user: userData } = await signIn(email, password);
       setUser(userData);
       
       toast({

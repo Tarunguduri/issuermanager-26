@@ -1,6 +1,5 @@
-import { supabase } from '@/integrations/supabase/client';
 
-// Re-export types and functions from supabase-service with field mapping
+import { v4 as uuidv4 } from 'uuid';
 import { 
   Issue as DbIssue, 
   IssueImage as DbIssueImage, 
@@ -10,8 +9,12 @@ import {
   updateIssue as updateDbIssue,
   getIssueById as getDbIssueById,
   getUserIssues as getDbUserIssues,
-  addIssueComment as addDbIssueComment
-} from '@/services/supabase-service';
+  addIssueComment as addDbIssueComment,
+  verifyImageWithAI as apiVerifyImageWithAI,
+  categories,
+  zones,
+  designations
+} from '@/services/local-storage-service';
 
 // Create camelCase versions of the types for frontend use
 export interface Issue {
@@ -91,6 +94,7 @@ const mapDbIssueToFrontend = (dbIssue: DbIssue): Issue => ({
   category: dbIssue.category,
   description: dbIssue.description,
   location: dbIssue.location,
+  coordinates: dbIssue.coordinates,
   priority: dbIssue.priority as 'low' | 'medium' | 'high',
   status: dbIssue.status as 'pending' | 'in-progress' | 'resolved' | 'rejected',
   zone: dbIssue.zone,
@@ -117,6 +121,7 @@ const mapFrontendIssueToDb = (issue: Partial<Issue>): Partial<DbIssue> => {
   if (issue.category !== undefined) dbIssue.category = issue.category;
   if (issue.description !== undefined) dbIssue.description = issue.description;
   if (issue.location !== undefined) dbIssue.location = issue.location;
+  if (issue.coordinates !== undefined) dbIssue.coordinates = issue.coordinates;
   if (issue.priority !== undefined) dbIssue.priority = issue.priority;
   if (issue.status !== undefined) dbIssue.status = issue.status;
   if (issue.zone !== undefined) dbIssue.zone = issue.zone;
@@ -138,8 +143,9 @@ const mapFrontendIssueToDb = (issue: Partial<Issue>): Partial<DbIssue> => {
     dbIssue.assigned_to = issue.assignedTo;
   }
   
-  // We don't map UI-specific fields like assignedOfficerName, issuerName, etc.
-  // as they're not stored directly in the database
+  if (issue.images !== undefined) {
+    dbIssue.images = issue.images;
+  }
   
   return dbIssue;
 };
@@ -239,64 +245,9 @@ export const addComment = async (commentData: Omit<IssueComment, 'id' | 'created
   return mapDbCommentToFrontend(result as unknown as DbIssueComment);
 };
 
-export const categories = [
-  'Water Supply',
-  'Electricity',
-  'Roads',
-  'Garbage Collection',
-  'Sewage',
-  'Street Lights',
-  'Public Property',
-  'Parks',
-  'Other'
-];
-
-export const zones = [
-  'North',
-  'South',
-  'East',
-  'West',
-  'Central'
-];
-
-export const designations = [
-  'Junior Officer',
-  'Senior Officer',
-  'Supervisor',
-  'Manager'
-];
+export { categories, zones, designations };
 
 // Enhanced AI verification function with better reliability
 export const verifyImageWithAI = async (imageUrl: string, category: string) => {
-  console.log('Verifying image with AI:', imageUrl, category);
-  
-  try {
-    // Simulate AI verification with more deterministic behavior
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Mock AI verification with less randomness for testing
-    // In production, this would call a real AI API
-    const isMatch = Math.random() > 0.15; // Increased success rate to 85%
-    
-    console.log(`AI verification result for ${category}: ${isMatch ? 'Success' : 'Failed'}`);
-    
-    if (isMatch) {
-      return {
-        success: true,
-        message: `Image verified successfully for category: ${category}`
-      };
-    } else {
-      return {
-        success: false,
-        message: `Image does not clearly show a ${category} issue. Please upload a clearer image.`
-      };
-    }
-  } catch (error) {
-    console.error('Error in AI verification:', error);
-    // Return failure with friendly message rather than throwing
-    return {
-      success: false,
-      message: `Verification error. Please try again.`
-    };
-  }
+  return await apiVerifyImageWithAI(imageUrl, category);
 };
