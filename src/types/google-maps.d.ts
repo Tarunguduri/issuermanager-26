@@ -2,7 +2,18 @@
 declare global {
   interface Window {
     google: {
-      maps: typeof google.maps;
+      maps: {
+        Map: any;
+        Marker: any;
+        Geocoder: any;
+        event: any;
+        MapTypeId: {
+          ROADMAP: string;
+        };
+        Animation: {
+          DROP: number;
+        };
+      };
     };
   }
 }
