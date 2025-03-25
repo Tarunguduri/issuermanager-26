@@ -3,7 +3,7 @@ import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, MapPin, Navigation } from 'lucide-react';
 import { LocationData, LocationCoordinates } from './map-types';
-import { useGoogleMaps } from './useGoogleMaps';
+import { useOpenStreetMap } from './useOpenStreetMap';
 import MapError from './MapError';
 import SelectedLocationDisplay from './SelectedLocationDisplay';
 
@@ -24,7 +24,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     selectedLocation, 
     getCurrentLocation,
     retryInitMap
-  } = useGoogleMaps({
+  } = useOpenStreetMap({
     containerRef: mapContainer,
     initialLocation,
     onLocationSelect
