@@ -20,7 +20,7 @@ const ThemeToggle: React.FC = () => {
         {theme === 'light' ? (
           <Moon className="absolute inset-0 h-full w-full transition-all" />
         ) : (
-          <Sun className="absolute inset-0 h-full w-full transition-all" />
+          <Sun className="absolute inset-0 h-full w-full text-white transition-all" />
         )}
       </div>
       <motion.div
