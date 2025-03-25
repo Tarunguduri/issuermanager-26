@@ -40,7 +40,6 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
   }[]>([]);
 
   useEffect(() => {
-    // Load before images for the issue
     const loadBeforeImages = async () => {
       try {
         const imagesData = await getIssueImages(issue.id, 'before');
@@ -66,7 +65,6 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
       }));
       
       setImages(prev => [...prev, ...newFiles]);
-      // Reset verification status when new images are added
       setVerificationStatus(null);
       setVerificationMessage('');
       setVerificationResult(null);
@@ -80,7 +78,6 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
       updated.splice(index, 1);
       return updated;
     });
-    // Reset verification status when images are removed
     setVerificationStatus(null);
     setVerificationMessage('');
     setVerificationResult(null);
@@ -110,7 +107,6 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
     setVerificationProgress(0);
 
     try {
-      // Simulate AI verification stages
       const stages = [
         'Initializing AI models...',
         'Analyzing before image...',
@@ -123,12 +119,9 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
       for (let i = 0; i < stages.length; i++) {
         setVerificationMessage(stages[i]);
         setVerificationProgress(Math.floor((i / stages.length) * 100));
-        // Simulate processing time for each stage
         await new Promise(resolve => setTimeout(resolve, 500));
       }
       
-      // In a real app, this would be a call to a real AI service
-      // For demo, we'll use the mock implementation from our utility
       const beforeImageUrl = beforeImages[0];
       const afterImageUrl = images[0].preview;
       
@@ -197,12 +190,10 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
     setIsLoading(true);
     
     try {
-      // Upload after images to Supabase
       for (const image of images) {
         await uploadIssueImage(issue.id, image.file, 'after', user.id);
       }
       
-      // Create AI verification record
       await createAIVerification({
         issue_id: issue.id,
         is_valid: true,
@@ -210,7 +201,6 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
         verification_type: 'resolution'
       });
       
-      // Mark the issue as resolved
       await updateIssue(issue.id, {
         status: 'resolved',
         updated_at: new Date().toISOString()
@@ -221,18 +211,15 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
         description: "Issue resolution has been verified and issue marked as resolved"
       });
       
-      // Clean up image previews
       images.forEach(img => URL.revokeObjectURL(img.preview));
       setImages([]);
       setVerificationStatus(null);
       setVerificationMessage('');
       setVerificationResult(null);
       
-      // Call success callback if provided
       if (onSuccess) {
         onSuccess();
       }
-      
     } catch (error) {
       console.error(error);
       toast({
@@ -369,13 +356,12 @@ const ResolutionVerificationForm: React.FC<ResolutionVerificationFormProps> = ({
                         <Progress 
                           value={area.improvement * 100} 
                           className="h-1.5"
-                          // Use different colors based on improvement level
                           style={{
                             ["--theme-primary" as any]: area.improvement > 0.6 
-                              ? 'hsl(142, 76%, 36%)' // Green for good improvement
+                              ? 'hsl(142, 76%, 36%)'
                               : area.improvement > 0.3 
-                                ? 'hsl(48, 96%, 53%)' // Yellow for moderate
-                                : 'hsl(0, 84%, 60%)' // Red for poor
+                                ? 'hsl(48, 96%, 53%)'
+                                : 'hsl(0, 84%, 60%)'
                           }}
                         />
                         <p className="text-xs opacity-80">{area.details}</p>
