@@ -7,20 +7,31 @@ import { motion } from 'framer-motion';
 
 const ThemeToggle: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
+  
+  // Use electric blue color for dark mode
+  const darkModeActiveColor = "#1EAEDB"; // Electric blue
 
   return (
     <Button 
       variant="ghost" 
       size="icon" 
       onClick={toggleTheme}
-      className="relative w-10 h-10 rounded-full"
+      className={`relative w-10 h-10 rounded-full ${
+        theme === 'dark' ? 'hover:bg-blue-900/20' : ''
+      }`}
       aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+      style={{
+        color: theme === 'dark' ? darkModeActiveColor : undefined
+      }}
     >
       <div className="relative w-6 h-6">
         {theme === 'light' ? (
           <Moon className="absolute inset-0 h-full w-full transition-all" />
         ) : (
-          <Sun className="absolute inset-0 h-full w-full text-white transition-all" />
+          <Sun 
+            className="absolute inset-0 h-full w-full transition-all" 
+            style={{ color: darkModeActiveColor }} // Electric blue in dark mode
+          />
         )}
       </div>
       <motion.div

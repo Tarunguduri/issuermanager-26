@@ -42,7 +42,11 @@ export const useOpenStreetMap = ({
     };
 
     fixLeafletIcon();
-    initializeMap();
+    
+    // Only initialize if not already loaded
+    if (!mapLoaded) {
+      initializeMap();
+    }
 
     return () => {
       if (map.current) {
@@ -52,12 +56,20 @@ export const useOpenStreetMap = ({
     };
   }, []);
   
-  // Initialize map
+  // Initialize map with error handling
   const initializeMap = () => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {
+      console.log("Map container not available yet");
+      return;
+    }
     
     try {
       console.log("Initializing OpenStreetMap");
+      
+      // Ensure Leaflet is available
+      if (!L || !L.map) {
+        throw new Error("Leaflet library not available");
+      }
       
       const initialCoordinates = initialLocation 
         ? [initialLocation.lat, initialLocation.lng] 
@@ -69,40 +81,26 @@ export const useOpenStreetMap = ({
         initialLocation ? 14 : 5
       );
       
-      // Add OSM tile layer
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19,
-      }).addTo(map.current);
+      // Add OSM tile layer with error handling
+      try {
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 19,
+        }).addTo(map.current);
+      } catch (tileError) {
+        console.error("Error adding tile layer:", tileError);
+        throw new Error("Failed to load map tiles");
+      }
       
       // Add initial marker if location is provided
       if (initialLocation) {
-        marker.current = L.marker([initialLocation.lat, initialLocation.lng], {
-          draggable: true
-        }).addTo(map.current);
-        
-        // Get address for the initial location
-        reverseGeocode(initialLocation.lat, initialLocation.lng);
-        
-        // Set up marker drag event
-        marker.current.on('dragend', function() {
-          if (marker.current) {
-            const position = marker.current.getLatLng();
-            reverseGeocode(position.lat, position.lng);
-          }
-        });
-      }
-      
-      // Add click event to map
-      map.current.on('click', function(event) {
-        const { lat, lng } = event.latlng;
-        console.log("Map clicked at:", lat, lng);
-        
-        // Update or create marker
-        if (!marker.current) {
-          marker.current = L.marker([lat, lng], {
+        try {
+          marker.current = L.marker([initialLocation.lat, initialLocation.lng], {
             draggable: true
-          }).addTo(map.current!);
+          }).addTo(map.current);
+          
+          // Get address for the initial location
+          reverseGeocode(initialLocation.lat, initialLocation.lng);
           
           // Set up marker drag event
           marker.current.on('dragend', function() {
@@ -111,12 +109,41 @@ export const useOpenStreetMap = ({
               reverseGeocode(position.lat, position.lng);
             }
           });
-        } else {
-          marker.current.setLatLng([lat, lng]);
+        } catch (markerError) {
+          console.error("Error adding marker:", markerError);
+          // Continue without marker rather than failing completely
         }
-        
-        reverseGeocode(lat, lng);
-      });
+      }
+      
+      // Add click event to map with error handling
+      try {
+        map.current.on('click', function(event) {
+          const { lat, lng } = event.latlng;
+          console.log("Map clicked at:", lat, lng);
+          
+          // Update or create marker
+          if (!marker.current && map.current) {
+            marker.current = L.marker([lat, lng], {
+              draggable: true
+            }).addTo(map.current);
+            
+            // Set up marker drag event
+            marker.current.on('dragend', function() {
+              if (marker.current) {
+                const position = marker.current.getLatLng();
+                reverseGeocode(position.lat, position.lng);
+              }
+            });
+          } else if (marker.current) {
+            marker.current.setLatLng([lat, lng]);
+          }
+          
+          reverseGeocode(lat, lng);
+        });
+      } catch (eventError) {
+        console.error("Error setting up map events:", eventError);
+        // Continue with limited functionality
+      }
       
       setMapLoaded(true);
       setMapError({ hasError: false, message: null });
@@ -135,15 +162,24 @@ export const useOpenStreetMap = ({
     }
   };
 
-  // Function to get address from coordinates (using Nominatim)
+  // Function to get address from coordinates (using Nominatim) with better error handling
   const reverseGeocode = async (lat: number, lng: number) => {
     try {
       setMapError({ hasError: false, message: null });
       
+      // Rate-limiting protection (Nominatim has a 1 request per second limit)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-        { headers: { 'Accept-Language': 'en' } }
+        { 
+          headers: { 'Accept-Language': 'en' },
+          signal: controller.signal
+        }
       );
+      
+      clearTimeout(timeoutId);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -168,12 +204,7 @@ export const useOpenStreetMap = ({
       } else {
         console.error("No address found");
         
-        toast({
-          title: 'Address Not Found',
-          description: 'Could not find address information for this location.',
-          variant: 'default'
-        });
-        
+        // Don't show error toast, just use coordinates
         const locationData = {
           lat,
           lng,
@@ -189,11 +220,14 @@ export const useOpenStreetMap = ({
     } catch (error) {
       console.error('Error during reverse geocoding:', error);
       
-      toast({
-        title: 'Geocoding Error',
-        description: 'Could not retrieve address for the selected location',
-        variant: 'destructive'
-      });
+      // Only show toast for non-abort errors
+      if (!(error instanceof DOMException && error.name === 'AbortError')) {
+        toast({
+          title: 'Geocoding Error',
+          description: 'Could not retrieve address for the selected location',
+          variant: 'destructive'
+        });
+      }
       
       // Still set location with coordinates only
       const locationData = {
@@ -230,29 +264,40 @@ export const useOpenStreetMap = ({
           
           // Update map view
           if (map.current) {
-            map.current.setView([lat, lng], 15);
-          
-            // Update or create marker
-            if (!marker.current) {
-              marker.current = L.marker([lat, lng], {
-                draggable: true
-              }).addTo(map.current);
-              
-              // Set up marker drag event
-              marker.current.on('dragend', function() {
-                if (marker.current) {
-                  const position = marker.current.getLatLng();
-                  reverseGeocode(position.lat, position.lng);
-                }
-              });
-            } else {
-              marker.current.setLatLng([lat, lng]);
-            }
+            try {
+              map.current.setView([lat, lng], 15);
             
+              // Update or create marker
+              if (!marker.current) {
+                marker.current = L.marker([lat, lng], {
+                  draggable: true
+                }).addTo(map.current);
+                
+                // Set up marker drag event
+                marker.current.on('dragend', function() {
+                  if (marker.current) {
+                    const position = marker.current.getLatLng();
+                    reverseGeocode(position.lat, position.lng);
+                  }
+                });
+              } else {
+                marker.current.setLatLng([lat, lng]);
+              }
+              
+              reverseGeocode(lat, lng);
+              resolve(true);
+            } catch (error) {
+              console.error("Error updating map with current location:", error);
+              
+              // Try to still get the address even if map update fails
+              reverseGeocode(lat, lng);
+              resolve(false);
+            }
+          } else {
+            // If map isn't initialized, still try to get address
             reverseGeocode(lat, lng);
+            resolve(false);
           }
-          
-          resolve(true);
         },
         (error) => {
           console.error('Error getting location:', error);
@@ -260,6 +305,10 @@ export const useOpenStreetMap = ({
           let errorMessage = 'Could not determine your location';
           if (error.code === 1) {
             errorMessage = 'Location access was denied. Please enable location services.';
+          } else if (error.code === 2) {
+            errorMessage = 'Location information is unavailable.';
+          } else if (error.code === 3) {
+            errorMessage = 'The request to get location timed out.';
           }
           
           toast({
@@ -281,6 +330,7 @@ export const useOpenStreetMap = ({
 
   const retryInitMap = () => {
     setMapError({ hasError: false, message: null });
+    setMapLoaded(false);
     initializeMap();
   };
 
