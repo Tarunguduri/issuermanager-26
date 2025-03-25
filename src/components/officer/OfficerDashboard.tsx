@@ -25,11 +25,11 @@ const OfficerDashboard: React.FC = () => {
           setIsLoading(true);
           const issuesData = await getOfficerIssues(user.category);
           
-          // Ensure we have valid dates for each issue
+          // Ensure we have valid dates for each issue - using the correct property names
           const validatedIssues = issuesData.map(issue => ({
             ...issue,
-            createdAt: issue.createdAt || new Date().toISOString(),
-            updatedAt: issue.updatedAt || issue.createdAt || new Date().toISOString()
+            created_at: issue.created_at || new Date().toISOString(),
+            updated_at: issue.updated_at || issue.created_at || new Date().toISOString()
           }));
           
           setIssues(validatedIssues);
