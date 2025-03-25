@@ -24,7 +24,15 @@ const OfficerDashboard: React.FC = () => {
         try {
           setIsLoading(true);
           const issuesData = await getOfficerIssues(user.category);
-          setIssues(issuesData);
+          
+          // Ensure we have valid dates for each issue
+          const validatedIssues = issuesData.map(issue => ({
+            ...issue,
+            createdAt: issue.createdAt || new Date().toISOString(),
+            updatedAt: issue.updatedAt || issue.createdAt || new Date().toISOString()
+          }));
+          
+          setIssues(validatedIssues);
           
           if (user.id) {
             const statsData = await getIssueStats(user.id, 'officer');
@@ -38,6 +46,8 @@ const OfficerDashboard: React.FC = () => {
           }
         } catch (error) {
           console.error("Error loading officer issues:", error);
+          // Set empty issues array to prevent null issues
+          setIssues([]);
         } finally {
           setIsLoading(false);
         }

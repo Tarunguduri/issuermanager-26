@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { Issue } from '@/utils/issues-service';
 import GlassmorphicCard from '../ui/GlassmorphicCard';
 import ResolutionVerificationForm from './ResolutionVerificationForm';
 import { Badge } from '@/components/ui/badge';
 import { CalendarClock, Map, User, BarChart3, CheckCircle, AlarmClock } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isValid, parseISO } from 'date-fns';
 
 interface IssueDetailsCardProps {
   issue: Issue;
@@ -24,6 +25,17 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onSuccess })
     'low': 'bg-green-500/10 text-green-500 border-green-500/30',
     'medium': 'bg-amber-500/10 text-amber-500 border-amber-500/30',
     'high': 'bg-red-500/10 text-red-500 border-red-500/30',
+  };
+
+  // Helper function to safely format dates
+  const safeFormatDate = (dateString: string, formatString: string) => {
+    try {
+      const date = parseISO(dateString);
+      return isValid(date) ? format(date, formatString) : 'Invalid date';
+    } catch (error) {
+      console.error("Date formatting error:", error);
+      return 'Invalid date';
+    }
   };
 
   // Determine the correct username from issue data
@@ -73,9 +85,9 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onSuccess })
                 <CalendarClock className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm text-muted-foreground">Reported on</p>
-                  <p className="font-medium">{format(new Date(issue.createdAt), 'PPP')}</p>
+                  <p className="font-medium">{safeFormatDate(issue.createdAt, 'PPP')}</p>
                   <p className="text-sm text-muted-foreground">
-                    {format(new Date(issue.createdAt), 'p')}
+                    {safeFormatDate(issue.createdAt, 'p')}
                   </p>
                 </div>
               </div>
@@ -85,7 +97,7 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onSuccess })
                   <AlarmClock className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm text-muted-foreground">In progress since</p>
-                    <p className="font-medium">{format(new Date(issue.updatedAt), 'PPP')}</p>
+                    <p className="font-medium">{safeFormatDate(issue.updatedAt, 'PPP')}</p>
                   </div>
                 </div>
               )}
@@ -95,7 +107,7 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onSuccess })
                   <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-sm text-muted-foreground">Resolved on</p>
-                    <p className="font-medium">{format(new Date(issue.updatedAt), 'PPP')}</p>
+                    <p className="font-medium">{safeFormatDate(issue.updatedAt, 'PPP')}</p>
                   </div>
                 </div>
               )}
@@ -160,7 +172,7 @@ const IssueDetailsCard: React.FC<IssueDetailsCardProps> = ({ issue, onSuccess })
                     <div className="flex justify-between items-start mb-2">
                       <div className="font-medium">{comment.author?.name || comment.authorName}</div>
                       <div className="text-xs text-muted-foreground">
-                        {format(new Date(comment.createdAt), 'PPp')}
+                        {safeFormatDate(comment.createdAt, 'PPp')}
                       </div>
                     </div>
                     <p className="text-muted-foreground">{comment.content}</p>

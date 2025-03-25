@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { Issue, IssueComment, addComment, updateIssueStatus } from '@/utils/issues-service';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, isValid, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -41,6 +42,19 @@ const getPriorityColor = (priority: string) => {
       return 'bg-red-500/20 text-red-700 dark:text-red-400';
     default:
       return 'bg-gray-500/20 text-gray-700 dark:text-gray-400';
+  }
+};
+
+// Helper function to safely format dates for relative time
+const safeFormatDistanceToNow = (dateString: string) => {
+  try {
+    const date = parseISO(dateString);
+    return isValid(date) 
+      ? formatDistanceToNow(date, { addSuffix: true })
+      : 'some time ago';
+  } catch (error) {
+    console.error("Date formatting error:", error);
+    return 'some time ago';
   }
 };
 
@@ -119,7 +133,6 @@ const IssueCard: React.FC<{ issue: Issue; onUpdate: () => void }> = ({ issue, on
 
   // Handle field name differences between the mock data and actual API data
   const officerName = issue.officer?.name || issue.assignedOfficerName;
-  const createdDate = new Date(issue.createdAt);
 
   return (
     <GlassmorphicCard className="p-5 h-full flex flex-col">
@@ -136,7 +149,7 @@ const IssueCard: React.FC<{ issue: Issue; onUpdate: () => void }> = ({ issue, on
         <div className="flex items-center text-xs text-muted-foreground mb-3">
           <Clock className="h-3 w-3 mr-1" /> 
           <span>
-            {formatDistanceToNow(createdDate, { addSuffix: true })}
+            {safeFormatDistanceToNow(issue.createdAt)}
           </span>
           
           <span className="mx-2">•</span>
@@ -212,7 +225,7 @@ const IssueCard: React.FC<{ issue: Issue; onUpdate: () => void }> = ({ issue, on
                         </span>
                       </span>
                       <span className="text-muted-foreground">
-                        {formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true })}
+                        {safeFormatDistanceToNow(comment.createdAt)}
                       </span>
                     </div>
                     <p>{comment.content}</p>

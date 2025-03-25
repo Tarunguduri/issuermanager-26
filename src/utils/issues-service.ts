@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { 
   Issue as DbIssue, 
@@ -87,6 +86,23 @@ export interface IssueComment {
   };
 }
 
+// Helper function to ensure we have valid dates
+const ensureValidDate = (dateStr: string | undefined): string => {
+  if (!dateStr) return new Date().toISOString();
+  
+  try {
+    // Check if the date is valid
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      return new Date().toISOString();
+    }
+    return dateStr;
+  } catch (e) {
+    console.error("Invalid date:", dateStr);
+    return new Date().toISOString();
+  }
+};
+
 // Mapping functions to convert between DB and frontend formats
 const mapDbIssueToFrontend = (dbIssue: DbIssue): Issue => ({
   id: dbIssue.id,
@@ -98,8 +114,8 @@ const mapDbIssueToFrontend = (dbIssue: DbIssue): Issue => ({
   priority: dbIssue.priority as 'low' | 'medium' | 'high',
   status: dbIssue.status as 'pending' | 'in-progress' | 'resolved' | 'rejected',
   zone: dbIssue.zone,
-  createdAt: dbIssue.created_at,
-  updatedAt: dbIssue.updated_at || dbIssue.created_at,
+  createdAt: ensureValidDate(dbIssue.created_at),
+  updatedAt: ensureValidDate(dbIssue.updated_at || dbIssue.created_at),
   userId: dbIssue.user_id,
   assignedTo: dbIssue.assigned_to,
   // Map user and officer fields
@@ -154,7 +170,7 @@ const mapDbCommentToFrontend = (comment: DbIssueComment): IssueComment => ({
   id: comment.id,
   content: comment.content,
   issueId: comment.issue_id,
-  createdAt: comment.created_at,
+  createdAt: ensureValidDate(comment.created_at),
   authorId: comment.author_id,
   authorRole: comment.author_role as 'issuer' | 'officer',
   authorName: comment.author?.name,
